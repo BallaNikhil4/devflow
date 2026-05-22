@@ -37,7 +37,7 @@ public class TaskController {
         return taskService.createTask(task);
     }
 
-    @PutMapping("/{taskId}/status/{status}")
+    @PutMapping("/{task_id}/status/{status}")
     public Task updateStatus(@PathVariable Long task_id, @PathVariable String status) {
         return taskService.updateTaskStatus(task_id, status);
     }
