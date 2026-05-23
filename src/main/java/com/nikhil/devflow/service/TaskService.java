@@ -35,4 +35,20 @@ public class TaskService {
         }
         return null;
     }
+
+    public void deleteTask(Long taskId) {
+        taskRepository.deleteById(taskId);
+    }
+
+    public Task updateTask(Long task_id, Task updatedTask) {
+        Optional<Task> optionalTask = taskRepository.findById(task_id);
+        if (optionalTask.isPresent()) {
+            Task exisitingtask = optionalTask.get();
+            exisitingtask.setTitle(updatedTask.getTitle());
+            exisitingtask.setDescription(updatedTask.getDescription());
+            exisitingtask.setPriority(updatedTask.getPriority());
+            return taskRepository.save(exisitingtask);
+        }
+        return null;
+    }
 }

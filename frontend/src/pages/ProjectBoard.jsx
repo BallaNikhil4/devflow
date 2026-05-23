@@ -7,22 +7,23 @@ import Sidebar from "../components/Sidebar";
 function ProjectBoard() {
 
     const { projectId } = useParams();
-
     const [tasks, setTasks] = useState([]);
-
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
-
     const [showTaskForm, setShowTaskForm] = useState(false);
+    const [editingTask, setEditingTask] = useState(null);
+    const [editTitle, setEditTitle] = useState("");
+    const [editDescription, setEditDescription] = useState("");
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [priority, setPriority] = useState("MEDIUM");
+    const [editPriority, setEditPriority] = useState("MEDIUM");
 
     useEffect(() => {
         fetchTasks();
     }, []);
 
     async function fetchTasks() {
-
         try {
-
             const response = await axios.get(
                 `http://localhost:8080/tasks/project/${projectId}`
             );
@@ -35,31 +36,25 @@ function ProjectBoard() {
     }
 
     async function createTask(e) {
-
         e.preventDefault();
-
         try {
-
             const response = await axios.post(
                 "http://localhost:8080/tasks",
                 {
                     title,
                     description,
                     status: "TODO",
-                    priority: "MEDIUM",
+                    priority: priority,
                     project: {
                         id: projectId
                     }
                 }
             );
-
             setTasks([...tasks, response.data]);
-
             setTitle("");
             setDescription("");
-
             setShowTaskForm(false);
-
+            setPriority("MEDIUM");
         } catch (error) {
             console.log(error);
         }
@@ -74,6 +69,59 @@ function ProjectBoard() {
             );
 
             await fetchTasks();
+
+        } catch (error) {
+            console.log(error);
+        }
+    }
+
+    async function deleteTask(taskId) {
+
+        try {
+
+            await axios.delete(
+                `http://localhost:8080/tasks/${taskId}`
+            );
+
+            await fetchTasks();
+
+        } catch (error) {
+            console.log(error);
+        }
+    }
+
+    function openEditModal(task) {
+
+        setEditingTask(task);
+
+        setEditTitle(task.title);
+
+        setEditDescription(task.description);
+
+        setEditPriority(task.priority);
+        setShowEditModal(true);
+
+    }
+
+    async function updateTask(e) {
+        e.preventDefault();
+
+        try {
+
+            await axios.put(
+                `http://localhost:8080/tasks/${editingTask.id}`,
+                {
+                    title: editTitle,
+                    description: editDescription,
+                    priority: editPriority
+                }
+            );
+
+            await fetchTasks();
+
+            setShowEditModal(false);
+            setEditingTask(null);
+            setEditPriority("MEDIUM");
 
         } catch (error) {
             console.log(error);
@@ -100,8 +148,6 @@ function ProjectBoard() {
 
             <div className="flex-1 p-8 overflow-auto">
 
-                {/* TOP BAR */}
-
                 <div className="flex justify-between items-center mb-8">
 
                     <div>
@@ -118,13 +164,12 @@ function ProjectBoard() {
 
                     <button
                         onClick={() => setShowTaskForm(!showTaskForm)}
-                        className="bg-blue-600 hover:bg-blue-700 transition text-white px-6 py-3 rounded-xl font-medium shadow-md cursor-pointer"                    >
+                        className="bg-blue-600 hover:bg-blue-700 transition text-white px-6 py-3 rounded-xl font-medium shadow-md cursor-pointer"
+                    >
                         + Add Task
                     </button>
 
                 </div>
-
-                {/* TASK FORM */}
 
                 {
                     showTaskForm && (
@@ -142,28 +187,37 @@ function ProjectBoard() {
                                     placeholder="Task Title"
                                     value={title}
                                     onChange={(e) => setTitle(e.target.value)}
-                                    className="w-full border border-gray-300 rounded-xl p-4 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    className="w-full border border-gray-300 rounded-xl p-4 mb-4"
                                 />
 
                                 <textarea
                                     placeholder="Task Description"
                                     value={description}
                                     onChange={(e) => setDescription(e.target.value)}
-                                    className="w-full border border-gray-300 rounded-xl p-4 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    className="w-full border border-gray-300 rounded-xl p-4 mb-4"
                                 />
-
+                                <select
+                                    value={priority}
+                                    onChange={(e) => setPriority(e.target.value)}
+                                    className="w-full border border-gray-300 rounded-xl p-4 mb-4 cursor-pointer"
+                                >
+                                    <option value="LOW">Low</option>
+                                    <option value="MEDIUM">Medium</option>
+                                    <option value="HIGH">High</option>
+                                </select>
                                 <div className="flex gap-4">
 
                                     <button
                                         type="submit"
-                                        className="bg-blue-600 hover:bg-blue-700 transition text-white px-6 py-3 rounded-xl font-medium cursor-pointer"                                    >
+                                        className="bg-blue-600 text-white px-6 py-3 rounded-xl cursor-pointer"
+                                    >
                                         Create Task
                                     </button>
 
                                     <button
                                         type="button"
                                         onClick={() => setShowTaskForm(false)}
-                                        className="bg-gray-300 hover:bg-gray-400 transition text-gray-800 px-6 py-3 rounded-xl font-medium"
+                                        className="bg-gray-300 px-6 py-3 rounded-xl cursor-pointer"
                                     >
                                         Cancel
                                     </button>
@@ -173,15 +227,10 @@ function ProjectBoard() {
                             </form>
 
                         </div>
-
                     )
                 }
 
-                {/* BOARD */}
-
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-                    {/* TODO */}
 
                     <div className="bg-[#EBECF0] rounded-2xl p-5 min-h-[650px]">
 
@@ -208,6 +257,12 @@ function ProjectBoard() {
                                     buttonAction={() =>
                                         updateTaskStatus(task.id, "IN_PROGRESS")
                                     }
+                                    deleteAction={() =>
+                                        deleteTask(task.id)
+                                    }
+                                    editAction={() =>
+                                        openEditModal(task)
+                                    }
                                 />
 
                             ))}
@@ -215,8 +270,6 @@ function ProjectBoard() {
                         </div>
 
                     </div>
-
-                    {/* IN PROGRESS */}
 
                     <div className="bg-[#EBECF0] rounded-2xl p-5 min-h-[650px]">
 
@@ -243,6 +296,12 @@ function ProjectBoard() {
                                     buttonAction={() =>
                                         updateTaskStatus(task.id, "DONE")
                                     }
+                                    deleteAction={() =>
+                                        deleteTask(task.id)
+                                    }
+                                    editAction={() =>
+                                        openEditModal(task)
+                                    }
                                 />
 
                             ))}
@@ -250,8 +309,6 @@ function ProjectBoard() {
                         </div>
 
                     </div>
-
-                    {/* DONE */}
 
                     <div className="bg-[#EBECF0] rounded-2xl p-5 min-h-[650px]">
 
@@ -274,6 +331,12 @@ function ProjectBoard() {
                                 <TaskCard
                                     key={task.id}
                                     task={task}
+                                    deleteAction={() =>
+                                        deleteTask(task.id)
+                                    }
+                                    editAction={() =>
+                                        openEditModal(task)
+                                    }
                                 />
 
                             ))}
@@ -283,6 +346,75 @@ function ProjectBoard() {
                     </div>
 
                 </div>
+
+                {
+                    showEditModal && (
+
+                        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+
+                            <div className="bg-white p-8 rounded-2xl w-[500px] shadow-xl">
+
+                                <h2 className="text-2xl font-bold mb-6">
+                                    Edit Task
+                                </h2>
+
+                                <form onSubmit={updateTask}>
+
+                                    <input
+                                        type="text"
+                                        value={editTitle}
+                                        onChange={(e) =>
+                                            setEditTitle(e.target.value)
+                                        }
+                                        className="w-full border border-gray-300 rounded-xl p-4 mb-4"
+                                    />
+
+                                    <textarea
+                                        value={editDescription}
+                                        onChange={(e) =>
+                                            setEditDescription(e.target.value)
+                                        }
+                                        className="w-full border border-gray-300 rounded-xl p-4 mb-4"
+                                    />
+
+                                    <select
+                                        value={editPriority}
+                                        onChange={(e) => setEditPriority(e.target.value)}
+                                        className="w-full border border-gray-300 rounded-xl p-4 mb-4 cursor-pointer"
+                                    >
+                                        <option value="LOW">Low</option>
+                                        <option value="MEDIUM">Medium</option>
+                                        <option value="HIGH">High</option>
+                                    </select>
+                                    <div className="flex gap-4">
+
+                                        <button
+                                            type="submit"
+                                            className="bg-blue-600 text-white px-6 py-3 rounded-xl cursor-pointer"
+                                        >
+                                            Save Changes
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setShowEditModal(false);
+                                                setEditingTask(null);
+                                            }}
+                                            className="bg-gray-300 px-6 py-3 rounded-xl cursor-pointer"
+                                        >
+                                            Cancel
+                                        </button>
+
+                                    </div>
+
+                                </form>
+
+                            </div>
+
+                        </div>
+                    )
+                }
 
             </div>
 
