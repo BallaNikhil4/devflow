@@ -26,6 +26,9 @@ function ProjectBoard() {
     const [editDueDate, setEditDueDate] = useState("");
     const [showEditModal, setShowEditModal] = useState(false);
 
+    const [searchTerm, setSearchTerm] = useState("");
+    const [priorityFilter, setPriorityFilter] = useState("ALL");
+
     useEffect(() => {
         fetchTasks();
     }, []);
@@ -141,18 +144,31 @@ function ProjectBoard() {
         await updateTaskStatus(taskId, newStatus);
     }
 
-    const todoTasks = tasks.filter(
+    const filteredTasks = tasks.filter((task) => {
+
+        const matchesSearch =
+            task.title
+                .toLowerCase()
+                .includes(searchTerm.toLowerCase());
+
+        const matchesPriority =
+            priorityFilter === "ALL" ||
+            task.priority === priorityFilter;
+
+        return matchesSearch && matchesPriority;
+    });
+
+    const todoTasks = filteredTasks.filter(
         (task) => task.status === "TODO"
     );
 
-    const inProgressTasks = tasks.filter(
+    const inProgressTasks = filteredTasks.filter(
         (task) => task.status === "IN_PROGRESS"
     );
 
-    const doneTasks = tasks.filter(
+    const doneTasks = filteredTasks.filter(
         (task) => task.status === "DONE"
     );
-
     return (
 
         <div className="flex min-h-screen bg-[#F4F5F7]">
@@ -174,13 +190,35 @@ function ProjectBoard() {
                         </p>
 
                     </div>
+                    <div className="flex flex-col md:flex-row items-center gap-4">
 
-                    <button
-                        onClick={() => setShowTaskForm(!showTaskForm)}
-                        className="bg-blue-600 hover:bg-blue-700 transition text-white px-6 py-3 rounded-xl font-medium shadow-md cursor-pointer"
-                    >
-                        + Add Task
-                    </button>
+                        <input
+                            type="text"
+                            placeholder="Search tasks..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-64 h-12 border border-gray-300 rounded-xl px-4 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+
+                        <select
+                            value={priorityFilter}
+                            onChange={(e) => setPriorityFilter(e.target.value)}
+                            className="border h-12 border-gray-300 rounded-xl px-4 bg-white cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                            <option value="ALL">All Priorities</option>
+                            <option value="HIGH">High</option>
+                            <option value="MEDIUM">Medium</option>
+                            <option value="LOW">Low</option>
+                        </select>
+
+                        <button
+                            onClick={() => setShowTaskForm(!showTaskForm)}
+                            className="bg-blue-600 h-12 hover:bg-blue-700 transition text-white px-6 rounded-xl font-medium shadow-md cursor-pointer whitespace-nowrap"
+                        >
+                            + Add Task
+                        </button>
+
+                    </div>
 
                 </div>
 
