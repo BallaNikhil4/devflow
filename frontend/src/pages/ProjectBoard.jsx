@@ -17,6 +17,8 @@ function ProjectBoard() {
     const [showEditModal, setShowEditModal] = useState(false);
     const [priority, setPriority] = useState("MEDIUM");
     const [editPriority, setEditPriority] = useState("MEDIUM");
+    const [dueDate, setDueDate] = useState("");
+    const [editDueDate, setEditDueDate] = useState("");
 
     useEffect(() => {
         fetchTasks();
@@ -45,6 +47,7 @@ function ProjectBoard() {
                     description,
                     status: "TODO",
                     priority: priority,
+                    dueDate,
                     project: {
                         id: projectId
                     }
@@ -55,6 +58,7 @@ function ProjectBoard() {
             setDescription("");
             setShowTaskForm(false);
             setPriority("MEDIUM");
+            setDueDate("");
         } catch (error) {
             console.log(error);
         }
@@ -93,13 +97,11 @@ function ProjectBoard() {
     function openEditModal(task) {
 
         setEditingTask(task);
-
         setEditTitle(task.title);
-
         setEditDescription(task.description);
-
         setEditPriority(task.priority);
         setShowEditModal(true);
+        setEditDueDate(task.dueDate || "");
 
     }
 
@@ -113,7 +115,8 @@ function ProjectBoard() {
                 {
                     title: editTitle,
                     description: editDescription,
-                    priority: editPriority
+                    priority: editPriority,
+                    dueDate: editDueDate
                 }
             );
 
@@ -196,6 +199,7 @@ function ProjectBoard() {
                                     onChange={(e) => setDescription(e.target.value)}
                                     className="w-full border border-gray-300 rounded-xl p-4 mb-4"
                                 />
+
                                 <select
                                     value={priority}
                                     onChange={(e) => setPriority(e.target.value)}
@@ -205,8 +209,15 @@ function ProjectBoard() {
                                     <option value="MEDIUM">Medium</option>
                                     <option value="HIGH">High</option>
                                 </select>
-                                <div className="flex gap-4">
 
+                                <input
+                                    type="date"
+                                    value={dueDate}
+                                    onChange={(e) => setDueDate(e.target.value)}
+                                    className="w-full border border-gray-300 rounded-xl p-4 mb-4 cursor-pointer"
+                                />
+
+                                <div className="flex gap-4">
                                     <button
                                         type="submit"
                                         className="bg-blue-600 text-white px-6 py-3 rounded-xl cursor-pointer"
@@ -386,6 +397,13 @@ function ProjectBoard() {
                                         <option value="MEDIUM">Medium</option>
                                         <option value="HIGH">High</option>
                                     </select>
+
+                                    <input
+                                        type="date"
+                                        value={editDueDate}
+                                        onChange={(e) => setEditDueDate(e.target.value)}
+                                        className="w-full border border-gray-300 rounded-xl p-4 mb-4 cursor-pointer"
+                                    />
                                     <div className="flex gap-4">
 
                                         <button

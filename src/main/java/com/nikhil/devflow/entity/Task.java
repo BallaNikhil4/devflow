@@ -1,5 +1,6 @@
 package com.nikhil.devflow.entity;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import jakarta.persistence.*;
@@ -26,6 +27,8 @@ public class Task {
     private String status;
 
     private String priority;
+
+    private LocalDate dueDate;
 
     @ManyToOne
     @JoinColumn(name = "project_id")

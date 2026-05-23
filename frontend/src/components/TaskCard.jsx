@@ -73,20 +73,28 @@ function TaskCard({
 
             {/* PRIORITY */}
 
-            <div className="mb-5">
+            <div className="mb-5 flex items-center justify-between">
 
                 <span
                     className={`text-xs px-2 py-1 rounded-full font-medium
-                        ${task.priority === "HIGH"
+            ${task.priority === "HIGH"
                             ? "bg-red-100 text-red-700"
                             : task.priority === "MEDIUM"
                                 ? "bg-yellow-100 text-yellow-700"
                                 : "bg-green-100 text-green-700"
                         }
-                    `}
+        `}
                 >
                     {task.priority}
                 </span>
+
+                {
+                    task.dueDate && (
+                        <span className="text-sm text-gray-500">
+                            📅 Due: {task.dueDate}
+                        </span>
+                    )
+                }
 
             </div>
 
