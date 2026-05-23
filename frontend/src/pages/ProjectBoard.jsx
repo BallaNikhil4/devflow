@@ -1,24 +1,30 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
+import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
+
 import TaskCard from "../components/TaskCard";
 import Sidebar from "../components/Sidebar";
 
 function ProjectBoard() {
 
     const { projectId } = useParams();
+
     const [tasks, setTasks] = useState([]);
+
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
+    const [priority, setPriority] = useState("MEDIUM");
+    const [dueDate, setDueDate] = useState("");
+
     const [showTaskForm, setShowTaskForm] = useState(false);
+
     const [editingTask, setEditingTask] = useState(null);
     const [editTitle, setEditTitle] = useState("");
     const [editDescription, setEditDescription] = useState("");
-    const [showEditModal, setShowEditModal] = useState(false);
-    const [priority, setPriority] = useState("MEDIUM");
     const [editPriority, setEditPriority] = useState("MEDIUM");
-    const [dueDate, setDueDate] = useState("");
     const [editDueDate, setEditDueDate] = useState("");
+    const [showEditModal, setShowEditModal] = useState(false);
 
     useEffect(() => {
         fetchTasks();
@@ -29,9 +35,7 @@ function ProjectBoard() {
             const response = await axios.get(
                 `http://localhost:8080/tasks/project/${projectId}`
             );
-
             setTasks(response.data);
-
         } catch (error) {
             console.log(error);
         }
@@ -39,6 +43,7 @@ function ProjectBoard() {
 
     async function createTask(e) {
         e.preventDefault();
+
         try {
             const response = await axios.post(
                 "http://localhost:8080/tasks",
@@ -46,33 +51,34 @@ function ProjectBoard() {
                     title,
                     description,
                     status: "TODO",
-                    priority: priority,
+                    priority,
                     dueDate,
                     project: {
                         id: projectId
                     }
                 }
             );
+
             setTasks([...tasks, response.data]);
+
             setTitle("");
             setDescription("");
-            setShowTaskForm(false);
             setPriority("MEDIUM");
             setDueDate("");
+            setShowTaskForm(false);
+
         } catch (error) {
             console.log(error);
         }
     }
 
     async function updateTaskStatus(taskId, status) {
-
         try {
-
             await axios.put(
                 `http://localhost:8080/tasks/${taskId}/status/${status}`
             );
 
-            await fetchTasks();
+            fetchTasks();
 
         } catch (error) {
             console.log(error);
@@ -80,14 +86,12 @@ function ProjectBoard() {
     }
 
     async function deleteTask(taskId) {
-
         try {
-
             await axios.delete(
                 `http://localhost:8080/tasks/${taskId}`
             );
 
-            await fetchTasks();
+            fetchTasks();
 
         } catch (error) {
             console.log(error);
@@ -95,21 +99,18 @@ function ProjectBoard() {
     }
 
     function openEditModal(task) {
-
         setEditingTask(task);
         setEditTitle(task.title);
         setEditDescription(task.description);
         setEditPriority(task.priority);
-        setShowEditModal(true);
         setEditDueDate(task.dueDate || "");
-
+        setShowEditModal(true);
     }
 
     async function updateTask(e) {
         e.preventDefault();
 
         try {
-
             await axios.put(
                 `http://localhost:8080/tasks/${editingTask.id}`,
                 {
@@ -124,11 +125,20 @@ function ProjectBoard() {
 
             setShowEditModal(false);
             setEditingTask(null);
-            setEditPriority("MEDIUM");
 
         } catch (error) {
             console.log(error);
         }
+    }
+
+    async function onDragEnd(result) {
+
+        if (!result.destination) return;
+
+        const taskId = result.draggableId;
+        const newStatus = result.destination.droppableId;
+
+        await updateTaskStatus(taskId, newStatus);
     }
 
     const todoTasks = tasks.filter(
@@ -218,6 +228,7 @@ function ProjectBoard() {
                                 />
 
                                 <div className="flex gap-4">
+
                                     <button
                                         type="submit"
                                         className="bg-blue-600 text-white px-6 py-3 rounded-xl cursor-pointer"
@@ -241,122 +252,156 @@ function ProjectBoard() {
                     )
                 }
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <DragDropContext onDragEnd={onDragEnd}>
 
-                    <div className="bg-[#EBECF0] rounded-2xl p-5 min-h-[650px]">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-                        <div className="flex justify-between items-center mb-6">
+                        {/* TODO */}
 
-                            <h2 className="text-xl font-bold text-gray-800">
-                                TODO
-                            </h2>
+                        <Droppable droppableId="TODO">
+                            {(provided) => (
+                                <div
+                                    ref={provided.innerRef}
+                                    {...provided.droppableProps}
+                                    className="bg-[#EBECF0] rounded-2xl p-5 min-h-[650px]"
+                                >
+                                    <h2 className="text-xl font-bold mb-6">TODO</h2>
 
-                            <span className="bg-gray-300 text-gray-700 text-sm px-3 py-1 rounded-full">
-                                {todoTasks.length}
-                            </span>
+                                    <div className="space-y-4 min-h-[200px]">
 
-                        </div>
+                                        {todoTasks.map((task, index) => (
+                                            <Draggable
+                                                key={task.id.toString()}
+                                                draggableId={task.id.toString()}
+                                                index={index}
+                                            >
+                                                {(provided) => (
+                                                    <div
+                                                        ref={provided.innerRef}
+                                                        {...provided.draggableProps}
+                                                        {...provided.dragHandleProps}
+                                                    >
+                                                        <TaskCard
+                                                            task={task}
+                                                            buttonText="Move to In Progress"
+                                                            buttonAction={() =>
+                                                                updateTaskStatus(task.id, "IN_PROGRESS")
+                                                            }
+                                                            deleteAction={() =>
+                                                                deleteTask(task.id)
+                                                            }
+                                                            editAction={() =>
+                                                                openEditModal(task)
+                                                            }
+                                                        />
+                                                    </div>
+                                                )}
+                                            </Draggable>
+                                        ))}
 
-                        <div className="space-y-4">
+                                        {provided.placeholder}
+                                    </div>
+                                </div>
+                            )}
+                        </Droppable>
 
-                            {todoTasks.map((task) => (
+                        {/* IN PROGRESS */}
 
-                                <TaskCard
-                                    key={task.id}
-                                    task={task}
-                                    buttonText="Move to In Progress"
-                                    buttonAction={() =>
-                                        updateTaskStatus(task.id, "IN_PROGRESS")
-                                    }
-                                    deleteAction={() =>
-                                        deleteTask(task.id)
-                                    }
-                                    editAction={() =>
-                                        openEditModal(task)
-                                    }
-                                />
+                        <Droppable droppableId="IN_PROGRESS">
+                            {(provided) => (
+                                <div
+                                    ref={provided.innerRef}
+                                    {...provided.droppableProps}
+                                    className="bg-[#EBECF0] rounded-2xl p-5 min-h-[650px]"
+                                >
+                                    <h2 className="text-xl font-bold mb-6">IN PROGRESS</h2>
 
-                            ))}
+                                    <div className="space-y-4 min-h-[200px]">
 
-                        </div>
+                                        {inProgressTasks.map((task, index) => (
+                                            <Draggable
+                                                key={task.id.toString()}
+                                                draggableId={task.id.toString()}
+                                                index={index}
+                                            >
+                                                {(provided) => (
+                                                    <div
+                                                        ref={provided.innerRef}
+                                                        {...provided.draggableProps}
+                                                        {...provided.dragHandleProps}
+                                                    >
+                                                        <TaskCard
+                                                            task={task}
+                                                            buttonText="Move to Done"
+                                                            buttonAction={() =>
+                                                                updateTaskStatus(task.id, "DONE")
+                                                            }
+                                                            deleteAction={() =>
+                                                                deleteTask(task.id)
+                                                            }
+                                                            editAction={() =>
+                                                                openEditModal(task)
+                                                            }
+                                                        />
+                                                    </div>
+                                                )}
+                                            </Draggable>
+                                        ))}
+
+                                        {provided.placeholder}
+                                    </div>
+                                </div>
+                            )}
+                        </Droppable>
+
+                        {/* DONE */}
+
+                        <Droppable droppableId="DONE">
+                            {(provided) => (
+                                <div
+                                    ref={provided.innerRef}
+                                    {...provided.droppableProps}
+                                    className="bg-[#EBECF0] rounded-2xl p-5 min-h-[650px]"
+                                >
+                                    <h2 className="text-xl font-bold mb-6">DONE</h2>
+
+                                    <div className="space-y-4 min-h-[200px]">
+
+                                        {doneTasks.map((task, index) => (
+                                            <Draggable
+                                                key={task.id.toString()}
+                                                draggableId={task.id.toString()}
+                                                index={index}
+                                            >
+                                                {(provided) => (
+                                                    <div
+                                                        ref={provided.innerRef}
+                                                        {...provided.draggableProps}
+                                                        {...provided.dragHandleProps}
+                                                    >
+                                                        <TaskCard
+                                                            task={task}
+                                                            deleteAction={() =>
+                                                                deleteTask(task.id)
+                                                            }
+                                                            editAction={() =>
+                                                                openEditModal(task)
+                                                            }
+                                                        />
+                                                    </div>
+                                                )}
+                                            </Draggable>
+                                        ))}
+
+                                        {provided.placeholder}
+                                    </div>
+                                </div>
+                            )}
+                        </Droppable>
 
                     </div>
 
-                    <div className="bg-[#EBECF0] rounded-2xl p-5 min-h-[650px]">
-
-                        <div className="flex justify-between items-center mb-6">
-
-                            <h2 className="text-xl font-bold text-gray-800">
-                                IN PROGRESS
-                            </h2>
-
-                            <span className="bg-blue-200 text-blue-800 text-sm px-3 py-1 rounded-full">
-                                {inProgressTasks.length}
-                            </span>
-
-                        </div>
-
-                        <div className="space-y-4">
-
-                            {inProgressTasks.map((task) => (
-
-                                <TaskCard
-                                    key={task.id}
-                                    task={task}
-                                    buttonText="Move to Done"
-                                    buttonAction={() =>
-                                        updateTaskStatus(task.id, "DONE")
-                                    }
-                                    deleteAction={() =>
-                                        deleteTask(task.id)
-                                    }
-                                    editAction={() =>
-                                        openEditModal(task)
-                                    }
-                                />
-
-                            ))}
-
-                        </div>
-
-                    </div>
-
-                    <div className="bg-[#EBECF0] rounded-2xl p-5 min-h-[650px]">
-
-                        <div className="flex justify-between items-center mb-6">
-
-                            <h2 className="text-xl font-bold text-gray-800">
-                                DONE
-                            </h2>
-
-                            <span className="bg-green-200 text-green-800 text-sm px-3 py-1 rounded-full">
-                                {doneTasks.length}
-                            </span>
-
-                        </div>
-
-                        <div className="space-y-4">
-
-                            {doneTasks.map((task) => (
-
-                                <TaskCard
-                                    key={task.id}
-                                    task={task}
-                                    deleteAction={() =>
-                                        deleteTask(task.id)
-                                    }
-                                    editAction={() =>
-                                        openEditModal(task)
-                                    }
-                                />
-
-                            ))}
-
-                        </div>
-
-                    </div>
-
-                </div>
+                </DragDropContext>
 
                 {
                     showEditModal && (
@@ -390,7 +435,9 @@ function ProjectBoard() {
 
                                     <select
                                         value={editPriority}
-                                        onChange={(e) => setEditPriority(e.target.value)}
+                                        onChange={(e) =>
+                                            setEditPriority(e.target.value)
+                                        }
                                         className="w-full border border-gray-300 rounded-xl p-4 mb-4 cursor-pointer"
                                     >
                                         <option value="LOW">Low</option>
@@ -401,9 +448,12 @@ function ProjectBoard() {
                                     <input
                                         type="date"
                                         value={editDueDate}
-                                        onChange={(e) => setEditDueDate(e.target.value)}
+                                        onChange={(e) =>
+                                            setEditDueDate(e.target.value)
+                                        }
                                         className="w-full border border-gray-300 rounded-xl p-4 mb-4 cursor-pointer"
                                     />
+
                                     <div className="flex gap-4">
 
                                         <button
