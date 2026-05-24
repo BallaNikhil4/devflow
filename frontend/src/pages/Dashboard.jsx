@@ -11,6 +11,15 @@ function Dashboard() {
     const [description, setDescription] = useState("");
 
     const [showForm, setShowForm] = useState(false);
+    const [showMenuId, setShowMenuId] = useState(null);
+
+    const [showEditModal, setShowEditModal] = useState(false);
+
+    const [editingProject, setEditingProject] = useState(null);
+
+    const [editName, setEditName] = useState("");
+
+    const [editDescription, setEditDescription] = useState("");
 
     const navigate = useNavigate();
 
@@ -53,6 +62,55 @@ function Dashboard() {
             setDescription("");
 
             setShowForm(false);
+
+        } catch (error) {
+            console.log(error);
+        }
+    }
+
+    async function deleteProject(projectId) {
+
+        try {
+
+            await axios.delete(
+                `http://localhost:8080/projects/${projectId}`
+            );
+
+            fetchProjects();
+
+        } catch (error) {
+            console.log(error);
+        }
+    }
+
+    function openEditModal(project) {
+
+        setEditingProject(project);
+
+        setEditName(project.name);
+
+        setEditDescription(project.description);
+
+        setShowEditModal(true);
+    }
+
+    async function updateProject(e) {
+
+        e.preventDefault();
+
+        try {
+
+            await axios.put(
+                `http://localhost:8080/projects/${editingProject.id}`,
+                {
+                    name: editName,
+                    description: editDescription
+                }
+            );
+
+            fetchProjects();
+
+            setShowEditModal(false);
 
         } catch (error) {
             console.log(error);
@@ -164,6 +222,53 @@ function Dashboard() {
                                     {project.name.charAt(0)}
                                 </div>
 
+                                <div className="relative">
+
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setShowMenuId(
+                                                showMenuId === project.id ? null : project.id
+                                            );
+                                        }}
+                                        className="text-2xl font-bold leading-none px-2 text-gray-600 hover:text-gray-900 cursor-pointer"
+                                    >
+                                        ⋮
+                                    </button>
+
+                                    {
+                                        showMenuId === project.id && (
+
+                                            <div className="absolute right-0 mt-2 w-32 bg-white border border-gray-200 rounded-lg shadow-lg z-20">
+
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        openEditModal(project);
+                                                        setShowMenuId(null);
+                                                    }}
+                                                    className="block w-full text-left px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                                                >
+                                                    Edit
+                                                </button>
+
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        deleteProject(project.id);
+                                                        setShowMenuId(null);
+                                                    }}
+                                                    className="block w-full text-left px-4 py-2 text-red-500 hover:bg-gray-100 cursor-pointer"
+                                                >
+                                                    Delete
+                                                </button>
+
+                                            </div>
+                                        )
+                                    }
+
+                                </div>
+
                             </div>
 
                             <h3 className="text-2xl font-semibold text-gray-800 mb-3">
@@ -193,7 +298,64 @@ function Dashboard() {
                 </div>
 
             </div>
+            {
+                showEditModal && (
 
+                    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+
+                        <div className="bg-white p-8 rounded-2xl w-[500px] shadow-xl">
+
+                            <h2 className="text-2xl font-bold mb-6">
+                                Edit Project
+                            </h2>
+
+                            <form onSubmit={updateProject}>
+
+                                <input
+                                    type="text"
+                                    value={editName}
+                                    onChange={(e) =>
+                                        setEditName(e.target.value)
+                                    }
+                                    className="w-full border border-gray-300 rounded-xl p-4 mb-4"
+                                />
+
+                                <textarea
+                                    value={editDescription}
+                                    onChange={(e) =>
+                                        setEditDescription(e.target.value)
+                                    }
+                                    className="w-full border border-gray-300 rounded-xl p-4 mb-4"
+                                />
+
+                                <div className="flex gap-4">
+
+                                    <button
+                                        type="submit"
+                                        className="bg-blue-600 hover:bg-blue-700 transition text-white px-6 py-3 rounded-xl font-medium cursor-pointer"
+                                    >
+                                        Save Changes
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            setShowEditModal(false)
+                                        }
+                                        className="bg-gray-300 hover:bg-gray-400 transition text-gray-800 px-6 py-3 rounded-xl font-medium cursor-pointer"
+                                    >
+                                        Cancel
+                                    </button>
+
+                                </div>
+
+                            </form>
+
+                        </div>
+
+                    </div>
+                )
+            }
         </div>
     );
 }

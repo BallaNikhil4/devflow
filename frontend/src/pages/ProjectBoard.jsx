@@ -169,6 +169,12 @@ function ProjectBoard() {
     const doneTasks = filteredTasks.filter(
         (task) => task.status === "DONE"
     );
+
+    const totalTasks = tasks.length;
+    const todoCount = todoTasks.length;
+    const inProgressCount = inProgressTasks.length;
+    const doneCount = doneTasks.length;
+
     return (
 
         <div className="flex min-h-screen bg-[#F4F5F7]">
@@ -289,6 +295,46 @@ function ProjectBoard() {
                         </div>
                     )
                 }
+
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+
+                    <div className="bg-white rounded-2xl shadow-sm p-6 border border-gray-200">
+                        <p className="text-sm text-gray-500 mb-2">
+                            Total Tasks
+                        </p>
+                        <h2 className="text-3xl font-bold text-gray-800">
+                            {totalTasks}
+                        </h2>
+                    </div>
+
+                    <div className="bg-white rounded-2xl shadow-sm p-6 border border-gray-200">
+                        <p className="text-sm text-gray-500 mb-2">
+                            Todo
+                        </p>
+                        <h2 className="text-3xl font-bold text-gray-800">
+                            {todoCount}
+                        </h2>
+                    </div>
+
+                    <div className="bg-white rounded-2xl shadow-sm p-6 border border-gray-200">
+                        <p className="text-sm text-gray-500 mb-2">
+                            In Progress
+                        </p>
+                        <h2 className="text-3xl font-bold text-blue-600">
+                            {inProgressCount}
+                        </h2>
+                    </div>
+
+                    <div className="bg-white rounded-2xl shadow-sm p-6 border border-gray-200">
+                        <p className="text-sm text-gray-500 mb-2">
+                            Done
+                        </p>
+                        <h2 className="text-3xl font-bold text-green-600">
+                            {doneCount}
+                        </h2>
+                    </div>
+
+                </div>
 
                 <DragDropContext onDragEnd={onDragEnd}>
 
