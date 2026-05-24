@@ -28,6 +28,11 @@ function ProjectBoard() {
 
     const [searchTerm, setSearchTerm] = useState("");
     const [priorityFilter, setPriorityFilter] = useState("ALL");
+    const [projectIdea, setProjectIdea] = useState("");
+
+    const [aiTasksText, setAiTasksText] = useState("");
+
+    const [loadingAi, setLoadingAi] = useState(false);
 
     useEffect(() => {
         fetchTasks();
@@ -142,6 +147,95 @@ function ProjectBoard() {
         const newStatus = result.destination.droppableId;
 
         await updateTaskStatus(taskId, newStatus);
+    }
+
+    async function generateTasksWithAI() {
+
+        if (!projectIdea.trim()) return;
+
+        try {
+
+            setLoadingAi(true);
+
+            const response = await axios.post(
+                "http://localhost:8080/ai/generate-tasks",
+                {
+                    idea: projectIdea
+                }
+            );
+
+            setAiTasksText(response.data);
+
+        } catch (error) {
+            console.log(error);
+        } finally {
+            setLoadingAi(false);
+        }
+    }
+
+    async function addAiTasksToBoard() {
+
+        if (!aiTasksText.trim()) return;
+
+        try {
+
+            const blocks =
+                aiTasksText
+                    .split("Title:")
+                    .filter(block => block.trim() !== "");
+
+            for (const block of blocks) {
+
+                const lines =
+                    block
+                        .trim()
+                        .split("\n")
+                        .filter(line => line.trim() !== "");
+
+                const title =
+                    lines[0]?.trim() || "Untitled Task";
+
+                const descriptionLine =
+                    lines.find(line =>
+                        line.startsWith("Description:")
+                    );
+
+                const priorityLine =
+                    lines.find(line =>
+                        line.startsWith("Priority:")
+                    );
+
+                const description =
+                    descriptionLine
+                        ?.replace("Description:", "")
+                        .trim() || "";
+
+                const priority =
+                    priorityLine
+                        ?.replace("Priority:", "")
+                        .trim() || "MEDIUM";
+
+                await axios.post(
+                    "http://localhost:8080/tasks",
+                    {
+                        title,
+                        description,
+                        status: "TODO",
+                        priority,
+                        project: {
+                            id: projectId
+                        }
+                    }
+                );
+            }
+
+            fetchTasks();
+
+            setAiTasksText("");
+
+        } catch (error) {
+            console.log(error);
+        }
     }
 
     const filteredTasks = tasks.filter((task) => {
@@ -295,6 +389,58 @@ function ProjectBoard() {
                         </div>
                     )
                 }
+
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-8">
+
+                    <h2 className="text-xl font-semibold mb-4 text-gray-800">
+                        AI Task Generator
+                    </h2>
+
+                    <textarea
+                        placeholder="Describe your project idea..."
+                        value={projectIdea}
+                        onChange={(e) =>
+                            setProjectIdea(e.target.value)
+                        }
+                        className="w-full border border-gray-300 rounded-xl p-4 min-h-[100px] mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+
+                    <button
+                        onClick={generateTasksWithAI}
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-medium cursor-pointer"
+                    >
+                        {
+                            loadingAi
+                                ? "Generating..."
+                                : "Generate Tasks with AI"
+                        }
+                    </button>
+
+                    {
+                        aiTasksText && (
+
+                            <>
+
+                                <textarea
+                                    value={aiTasksText}
+                                    onChange={(e) =>
+                                        setAiTasksText(e.target.value)
+                                    }
+                                    className="w-full border border-gray-300 rounded-xl p-4 min-h-[300px] mt-6 mb-4 focus:outline-none"
+                                />
+
+                                <button
+                                    onClick={addAiTasksToBoard}
+                                    className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-medium cursor-pointer"
+                                >
+                                    Add Tasks to Board
+                                </button>
+
+                            </>
+                        )
+                    }
+
+                </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
 

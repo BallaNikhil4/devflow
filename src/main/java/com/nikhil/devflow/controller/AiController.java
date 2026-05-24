@@ -1,0 +1,26 @@
+package com.nikhil.devflow.controller;
+
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+
+import com.nikhil.devflow.service.AiService;
+
+@RestController
+@RequestMapping("/ai")
+@CrossOrigin(origins = "http://localhost:5173")
+public class AiController {
+
+    @Autowired
+    private AiService aiService;
+
+    @PostMapping("/generate-tasks")
+    public String generateTasks(
+            @RequestBody Map<String, String> body) {
+
+        String idea = body.get("idea");
+
+        return aiService.generateTasks(idea);
+    }
+}
