@@ -34,6 +34,8 @@ function ProjectBoard() {
 
     const [loadingAi, setLoadingAi] = useState(false);
 
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
     useEffect(() => {
         fetchTasks();
     }, []);
@@ -271,26 +273,44 @@ function ProjectBoard() {
 
     return (
 
-        <div className="flex min-h-screen bg-[#F4F5F7]">
+        <div className="flex h-screen bg-[#F4F5F7] overflow-hidden">
 
-            <Sidebar />
-
-            <div className="flex-1 p-8 overflow-auto">
-
-                <div className="flex justify-between items-center mb-8">
-
-                    <div>
-
-                        <h1 className="text-4xl font-bold text-gray-800">
-                            Project Board
-                        </h1>
-
-                        <p className="text-gray-500 mt-2">
-                            Track and manage development tasks
-                        </p>
-
+            {isSidebarOpen && (
+                <>
+                    <div 
+                        className="fixed inset-0 bg-black/40 z-40 transition-opacity" 
+                        onClick={() => setIsSidebarOpen(false)} 
+                    />
+                    <div className="fixed inset-y-0 left-0 z-50 w-72 flex shadow-2xl transform transition-transform">
+                        <Sidebar />
                     </div>
-                    <div className="flex flex-col md:flex-row items-center gap-4">
+                </>
+            )}
+
+            <div className="flex-1 flex flex-col h-full overflow-hidden">
+                <div className="flex-1 p-8 overflow-auto">
+
+                    <div className="flex justify-between items-center mb-8">
+
+                        <div className="flex items-center gap-4">
+                            <button 
+                                onClick={() => setIsSidebarOpen(true)} 
+                                className="p-2 hover:bg-gray-200 rounded-xl transition-colors cursor-pointer"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8 text-gray-700">
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                                </svg>
+                            </button>
+                            <div>
+                                <h1 className="text-4xl font-bold text-gray-900 tracking-tight">
+                                    Project Board
+                                </h1>
+                                <p className="text-gray-500 mt-2 font-medium">
+                                    Track and manage development tasks
+                                </p>
+                            </div>
+                        </div>
+                        <div className="flex flex-col md:flex-row items-center gap-4">
 
                         <input
                             type="text"
@@ -390,57 +410,7 @@ function ProjectBoard() {
                     )
                 }
 
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-8">
 
-                    <h2 className="text-xl font-semibold mb-4 text-gray-800">
-                        AI Task Generator
-                    </h2>
-
-                    <textarea
-                        placeholder="Describe your project idea..."
-                        value={projectIdea}
-                        onChange={(e) =>
-                            setProjectIdea(e.target.value)
-                        }
-                        className="w-full border border-gray-300 rounded-xl p-4 min-h-[100px] mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-
-                    <button
-                        onClick={generateTasksWithAI}
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-medium cursor-pointer"
-                    >
-                        {
-                            loadingAi
-                                ? "Generating..."
-                                : "Generate Tasks with AI"
-                        }
-                    </button>
-
-                    {
-                        aiTasksText && (
-
-                            <>
-
-                                <textarea
-                                    value={aiTasksText}
-                                    onChange={(e) =>
-                                        setAiTasksText(e.target.value)
-                                    }
-                                    className="w-full border border-gray-300 rounded-xl p-4 min-h-[300px] mt-6 mb-4 focus:outline-none"
-                                />
-
-                                <button
-                                    onClick={addAiTasksToBoard}
-                                    className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-medium cursor-pointer"
-                                >
-                                    Add Tasks to Board
-                                </button>
-
-                            </>
-                        )
-                    }
-
-                </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
 
@@ -493,7 +463,7 @@ function ProjectBoard() {
                                 <div
                                     ref={provided.innerRef}
                                     {...provided.droppableProps}
-                                    className="bg-[#EBECF0] rounded-2xl p-5 min-h-[650px]"
+                                    className="bg-gray-100/80 border border-gray-200 rounded-2xl p-5 min-h-[650px] shadow-sm"
                                 >
                                     <h2 className="text-xl font-bold mb-6">TODO</h2>
 
@@ -542,7 +512,7 @@ function ProjectBoard() {
                                 <div
                                     ref={provided.innerRef}
                                     {...provided.droppableProps}
-                                    className="bg-[#EBECF0] rounded-2xl p-5 min-h-[650px]"
+                                    className="bg-gray-100/80 border border-gray-200 rounded-2xl p-5 min-h-[650px] shadow-sm"
                                 >
                                     <h2 className="text-xl font-bold mb-6">IN PROGRESS</h2>
 
@@ -591,7 +561,7 @@ function ProjectBoard() {
                                 <div
                                     ref={provided.innerRef}
                                     {...provided.droppableProps}
-                                    className="bg-[#EBECF0] rounded-2xl p-5 min-h-[650px]"
+                                    className="bg-gray-100/80 border border-gray-200 rounded-2xl p-5 min-h-[650px] shadow-sm"
                                 >
                                     <h2 className="text-xl font-bold mb-6">DONE</h2>
 
@@ -714,6 +684,59 @@ function ProjectBoard() {
                     )
                 }
 
+                </div>
+            </div>
+
+            {/* Right AI Copilot Panel */}
+            <div className="w-[360px] bg-white border-l border-gray-200 flex flex-col h-full shadow-lg z-10 hidden lg:flex">
+                <div className="p-6 border-b border-gray-100 flex-shrink-0">
+                    <h2 className="text-xl font-bold text-gray-800">DevFlow AI Copilot</h2>
+                    <p className="text-xs text-gray-500 mt-1">Your intelligent development assistant</p>
+                </div>
+                <div className="p-6 flex-1 overflow-auto flex flex-col gap-6">
+                    <div>
+                        <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Quick Actions</h3>
+                        <div className="grid grid-cols-2 gap-2">
+                            <button className="text-xs bg-indigo-50 text-indigo-700 hover:bg-indigo-100 py-2 px-3 rounded-lg font-medium transition-colors border border-indigo-100 cursor-pointer">Generate Tasks</button>
+                            <button className="text-xs bg-indigo-50 text-indigo-700 hover:bg-indigo-100 py-2 px-3 rounded-lg font-medium transition-colors border border-indigo-100 cursor-pointer">Suggest Next Task</button>
+                            <button className="text-xs bg-indigo-50 text-indigo-700 hover:bg-indigo-100 py-2 px-3 rounded-lg font-medium transition-colors border border-indigo-100 cursor-pointer">Detect Missing Tasks</button>
+                            <button className="text-xs bg-indigo-50 text-indigo-700 hover:bg-indigo-100 py-2 px-3 rounded-lg font-medium transition-colors border border-indigo-100 cursor-pointer">Break Down Task</button>
+                        </div>
+                    </div>
+                    
+                    <div className="flex-1 flex flex-col border border-gray-200 rounded-2xl overflow-hidden bg-gray-50/50 shadow-inner">
+                        <div className="flex-1 p-4 overflow-auto">
+                            <div className="mb-4 flex flex-col items-end">
+                                <div className="bg-blue-600 text-white rounded-2xl rounded-tr-sm py-2.5 px-4 max-w-[90%] text-sm shadow-sm">
+                                    What should I build next?
+                                </div>
+                            </div>
+                            <div className="mb-4 flex flex-col items-start">
+                                <div className="bg-white border border-gray-200 text-gray-700 rounded-2xl rounded-tl-sm py-3 px-4 max-w-[95%] text-sm shadow-sm">
+                                    <p className="mb-2 font-medium">Based on your current board, I suggest:</p>
+                                    <ul className="list-disc pl-5 space-y-1 text-gray-600">
+                                        <li>User authentication module</li>
+                                        <li>Database schema setup</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="p-3 bg-white border-t border-gray-200">
+                            <div className="relative flex items-center">
+                                <textarea 
+                                    className="w-full bg-gray-100 border-transparent focus:border-blue-500 focus:bg-white focus:ring-1 focus:ring-blue-500 rounded-xl pl-4 pr-12 py-3 text-sm resize-none"
+                                    rows="1"
+                                    placeholder="Ask DevFlow AI..."
+                                ></textarea>
+                                <button className="absolute right-2 p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors cursor-pointer shadow-sm">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                        <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
         </div>
