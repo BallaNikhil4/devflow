@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-
+import { Rnd } from "react-rnd";
 import TaskCard from "../components/TaskCard";
 import Sidebar from "../components/Sidebar";
 
@@ -35,6 +35,8 @@ function ProjectBoard() {
     const [loadingAi, setLoadingAi] = useState(false);
 
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+    const [showAiWorkspace, setShowAiWorkspace] = useState(false);
 
     useEffect(() => {
         fetchTasks();
@@ -277,9 +279,9 @@ function ProjectBoard() {
 
             {isSidebarOpen && (
                 <>
-                    <div 
-                        className="fixed inset-0 bg-black/40 z-40 transition-opacity" 
-                        onClick={() => setIsSidebarOpen(false)} 
+                    <div
+                        className="fixed inset-0 bg-black/40 z-40 transition-opacity"
+                        onClick={() => setIsSidebarOpen(false)}
                     />
                     <div className="fixed inset-y-0 left-0 z-50 w-72 flex shadow-2xl transform transition-transform">
                         <Sidebar />
@@ -293,351 +295,84 @@ function ProjectBoard() {
                     <div className="flex justify-between items-center mb-8">
 
                         <div className="flex items-center gap-4">
-                            <button 
-                                onClick={() => setIsSidebarOpen(true)} 
+                            <button
+                                onClick={() => setIsSidebarOpen(true)}
                                 className="p-2 hover:bg-gray-200 rounded-xl transition-colors cursor-pointer"
                             >
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8 text-gray-700">
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
                                 </svg>
                             </button>
                             <div>
                                 <h1 className="text-4xl font-bold text-gray-900 tracking-tight">
                                     Project Board
                                 </h1>
-                                <p className="text-gray-500 mt-2 font-medium">
+                                {/* <p className="text-gray-500 mt-2 font-medium">
                                     Track and manage development tasks
-                                </p>
+                                </p> */}
                             </div>
                         </div>
                         <div className="flex flex-col md:flex-row items-center gap-4">
 
-                        <input
-                            type="text"
-                            placeholder="Search tasks..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-64 h-12 border border-gray-300 rounded-xl px-4 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
+                            <input
+                                type="text"
+                                placeholder="Search tasks..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="w-64 h-12 border border-gray-300 rounded-xl px-4 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
 
-                        <select
-                            value={priorityFilter}
-                            onChange={(e) => setPriorityFilter(e.target.value)}
-                            className="border h-12 border-gray-300 rounded-xl px-4 bg-white cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        >
-                            <option value="ALL">All Priorities</option>
-                            <option value="HIGH">High</option>
-                            <option value="MEDIUM">Medium</option>
-                            <option value="LOW">Low</option>
-                        </select>
+                            <select
+                                value={priorityFilter}
+                                onChange={(e) => setPriorityFilter(e.target.value)}
+                                className="border h-12 border-gray-300 rounded-xl px-4 bg-white cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            >
+                                <option value="ALL">All Priorities</option>
+                                <option value="HIGH">High</option>
+                                <option value="MEDIUM">Medium</option>
+                                <option value="LOW">Low</option>
+                            </select>
 
-                        <button
-                            onClick={() => setShowTaskForm(!showTaskForm)}
-                            className="bg-blue-600 h-12 hover:bg-blue-700 transition text-white px-6 rounded-xl font-medium shadow-md cursor-pointer whitespace-nowrap"
-                        >
-                            + Add Task
-                        </button>
-
-                    </div>
-
-                </div>
-
-                {
-                    showTaskForm && (
-
-                        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-8">
-
-                            <h2 className="text-2xl font-semibold mb-5 text-gray-800">
-                                New Task
-                            </h2>
-
-                            <form onSubmit={createTask}>
-
-                                <input
-                                    type="text"
-                                    placeholder="Task Title"
-                                    value={title}
-                                    onChange={(e) => setTitle(e.target.value)}
-                                    className="w-full border border-gray-300 rounded-xl p-4 mb-4"
-                                />
-
-                                <textarea
-                                    placeholder="Task Description"
-                                    value={description}
-                                    onChange={(e) => setDescription(e.target.value)}
-                                    className="w-full border border-gray-300 rounded-xl p-4 mb-4"
-                                />
-
-                                <select
-                                    value={priority}
-                                    onChange={(e) => setPriority(e.target.value)}
-                                    className="w-full border border-gray-300 rounded-xl p-4 mb-4 cursor-pointer"
-                                >
-                                    <option value="LOW">Low</option>
-                                    <option value="MEDIUM">Medium</option>
-                                    <option value="HIGH">High</option>
-                                </select>
-
-                                <input
-                                    type="date"
-                                    value={dueDate}
-                                    onChange={(e) => setDueDate(e.target.value)}
-                                    className="w-full border border-gray-300 rounded-xl p-4 mb-4 cursor-pointer"
-                                />
-
-                                <div className="flex gap-4">
-
-                                    <button
-                                        type="submit"
-                                        className="bg-blue-600 text-white px-6 py-3 rounded-xl cursor-pointer"
-                                    >
-                                        Create Task
-                                    </button>
-
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowTaskForm(false)}
-                                        className="bg-gray-300 px-6 py-3 rounded-xl cursor-pointer"
-                                    >
-                                        Cancel
-                                    </button>
-
-                                </div>
-
-                            </form>
+                            <button
+                                onClick={() => setShowTaskForm(!showTaskForm)}
+                                className="bg-blue-600 h-12 hover:bg-blue-700 transition text-white px-6 rounded-xl font-medium shadow-md cursor-pointer whitespace-nowrap"
+                            >
+                                + Add Task
+                            </button>
 
                         </div>
-                    )
-                }
-
-
-
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-
-                    <div className="bg-white rounded-2xl shadow-sm p-6 border border-gray-200">
-                        <p className="text-sm text-gray-500 mb-2">
-                            Total Tasks
-                        </p>
-                        <h2 className="text-3xl font-bold text-gray-800">
-                            {totalTasks}
-                        </h2>
-                    </div>
-
-                    <div className="bg-white rounded-2xl shadow-sm p-6 border border-gray-200">
-                        <p className="text-sm text-gray-500 mb-2">
-                            Todo
-                        </p>
-                        <h2 className="text-3xl font-bold text-gray-800">
-                            {todoCount}
-                        </h2>
-                    </div>
-
-                    <div className="bg-white rounded-2xl shadow-sm p-6 border border-gray-200">
-                        <p className="text-sm text-gray-500 mb-2">
-                            In Progress
-                        </p>
-                        <h2 className="text-3xl font-bold text-blue-600">
-                            {inProgressCount}
-                        </h2>
-                    </div>
-
-                    <div className="bg-white rounded-2xl shadow-sm p-6 border border-gray-200">
-                        <p className="text-sm text-gray-500 mb-2">
-                            Done
-                        </p>
-                        <h2 className="text-3xl font-bold text-green-600">
-                            {doneCount}
-                        </h2>
-                    </div>
-
-                </div>
-
-                <DragDropContext onDragEnd={onDragEnd}>
-
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-                        {/* TODO */}
-
-                        <Droppable droppableId="TODO">
-                            {(provided) => (
-                                <div
-                                    ref={provided.innerRef}
-                                    {...provided.droppableProps}
-                                    className="bg-gray-100/80 border border-gray-200 rounded-2xl p-5 min-h-[650px] shadow-sm"
-                                >
-                                    <h2 className="text-xl font-bold mb-6">TODO</h2>
-
-                                    <div className="space-y-4 min-h-[200px]">
-
-                                        {todoTasks.map((task, index) => (
-                                            <Draggable
-                                                key={task.id.toString()}
-                                                draggableId={task.id.toString()}
-                                                index={index}
-                                            >
-                                                {(provided) => (
-                                                    <div
-                                                        ref={provided.innerRef}
-                                                        {...provided.draggableProps}
-                                                        {...provided.dragHandleProps}
-                                                    >
-                                                        <TaskCard
-                                                            task={task}
-                                                            buttonText="Move to In Progress"
-                                                            buttonAction={() =>
-                                                                updateTaskStatus(task.id, "IN_PROGRESS")
-                                                            }
-                                                            deleteAction={() =>
-                                                                deleteTask(task.id)
-                                                            }
-                                                            editAction={() =>
-                                                                openEditModal(task)
-                                                            }
-                                                        />
-                                                    </div>
-                                                )}
-                                            </Draggable>
-                                        ))}
-
-                                        {provided.placeholder}
-                                    </div>
-                                </div>
-                            )}
-                        </Droppable>
-
-                        {/* IN PROGRESS */}
-
-                        <Droppable droppableId="IN_PROGRESS">
-                            {(provided) => (
-                                <div
-                                    ref={provided.innerRef}
-                                    {...provided.droppableProps}
-                                    className="bg-gray-100/80 border border-gray-200 rounded-2xl p-5 min-h-[650px] shadow-sm"
-                                >
-                                    <h2 className="text-xl font-bold mb-6">IN PROGRESS</h2>
-
-                                    <div className="space-y-4 min-h-[200px]">
-
-                                        {inProgressTasks.map((task, index) => (
-                                            <Draggable
-                                                key={task.id.toString()}
-                                                draggableId={task.id.toString()}
-                                                index={index}
-                                            >
-                                                {(provided) => (
-                                                    <div
-                                                        ref={provided.innerRef}
-                                                        {...provided.draggableProps}
-                                                        {...provided.dragHandleProps}
-                                                    >
-                                                        <TaskCard
-                                                            task={task}
-                                                            buttonText="Move to Done"
-                                                            buttonAction={() =>
-                                                                updateTaskStatus(task.id, "DONE")
-                                                            }
-                                                            deleteAction={() =>
-                                                                deleteTask(task.id)
-                                                            }
-                                                            editAction={() =>
-                                                                openEditModal(task)
-                                                            }
-                                                        />
-                                                    </div>
-                                                )}
-                                            </Draggable>
-                                        ))}
-
-                                        {provided.placeholder}
-                                    </div>
-                                </div>
-                            )}
-                        </Droppable>
-
-                        {/* DONE */}
-
-                        <Droppable droppableId="DONE">
-                            {(provided) => (
-                                <div
-                                    ref={provided.innerRef}
-                                    {...provided.droppableProps}
-                                    className="bg-gray-100/80 border border-gray-200 rounded-2xl p-5 min-h-[650px] shadow-sm"
-                                >
-                                    <h2 className="text-xl font-bold mb-6">DONE</h2>
-
-                                    <div className="space-y-4 min-h-[200px]">
-
-                                        {doneTasks.map((task, index) => (
-                                            <Draggable
-                                                key={task.id.toString()}
-                                                draggableId={task.id.toString()}
-                                                index={index}
-                                            >
-                                                {(provided) => (
-                                                    <div
-                                                        ref={provided.innerRef}
-                                                        {...provided.draggableProps}
-                                                        {...provided.dragHandleProps}
-                                                    >
-                                                        <TaskCard
-                                                            task={task}
-                                                            deleteAction={() =>
-                                                                deleteTask(task.id)
-                                                            }
-                                                            editAction={() =>
-                                                                openEditModal(task)
-                                                            }
-                                                        />
-                                                    </div>
-                                                )}
-                                            </Draggable>
-                                        ))}
-
-                                        {provided.placeholder}
-                                    </div>
-                                </div>
-                            )}
-                        </Droppable>
 
                     </div>
 
-                </DragDropContext>
+                    {
+                        showTaskForm && (
 
-                {
-                    showEditModal && (
+                            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-8">
 
-                        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-
-                            <div className="bg-white p-8 rounded-2xl w-[500px] shadow-xl">
-
-                                <h2 className="text-2xl font-bold mb-6">
-                                    Edit Task
+                                <h2 className="text-2xl font-semibold mb-5 text-gray-800">
+                                    New Task
                                 </h2>
 
-                                <form onSubmit={updateTask}>
+                                <form onSubmit={createTask}>
 
                                     <input
                                         type="text"
-                                        value={editTitle}
-                                        onChange={(e) =>
-                                            setEditTitle(e.target.value)
-                                        }
+                                        placeholder="Task Title"
+                                        value={title}
+                                        onChange={(e) => setTitle(e.target.value)}
                                         className="w-full border border-gray-300 rounded-xl p-4 mb-4"
                                     />
 
                                     <textarea
-                                        value={editDescription}
-                                        onChange={(e) =>
-                                            setEditDescription(e.target.value)
-                                        }
+                                        placeholder="Task Description"
+                                        value={description}
+                                        onChange={(e) => setDescription(e.target.value)}
                                         className="w-full border border-gray-300 rounded-xl p-4 mb-4"
                                     />
 
                                     <select
-                                        value={editPriority}
-                                        onChange={(e) =>
-                                            setEditPriority(e.target.value)
-                                        }
+                                        value={priority}
+                                        onChange={(e) => setPriority(e.target.value)}
                                         className="w-full border border-gray-300 rounded-xl p-4 mb-4 cursor-pointer"
                                     >
                                         <option value="LOW">Low</option>
@@ -647,10 +382,8 @@ function ProjectBoard() {
 
                                     <input
                                         type="date"
-                                        value={editDueDate}
-                                        onChange={(e) =>
-                                            setEditDueDate(e.target.value)
-                                        }
+                                        value={dueDate}
+                                        onChange={(e) => setDueDate(e.target.value)}
                                         className="w-full border border-gray-300 rounded-xl p-4 mb-4 cursor-pointer"
                                     />
 
@@ -660,15 +393,12 @@ function ProjectBoard() {
                                             type="submit"
                                             className="bg-blue-600 text-white px-6 py-3 rounded-xl cursor-pointer"
                                         >
-                                            Save Changes
+                                            Create Task
                                         </button>
 
                                         <button
                                             type="button"
-                                            onClick={() => {
-                                                setShowEditModal(false);
-                                                setEditingTask(null);
-                                            }}
+                                            onClick={() => setShowTaskForm(false)}
                                             className="bg-gray-300 px-6 py-3 rounded-xl cursor-pointer"
                                         >
                                             Cancel
@@ -679,10 +409,294 @@ function ProjectBoard() {
                                 </form>
 
                             </div>
+                        )
+                    }
+
+
+
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+
+                        <div className="bg-white rounded-xl shadow-sm px-5 py-4 border border-gray-200 flex items-center justify-between">
+                            <div>
+                                <p className="text-xs uppercase tracking-wider font-semibold text-gray-500 mb-1">Total Tasks</p>
+                                <h2 className="text-2xl font-bold text-gray-800">{totalTasks}</h2>
+                            </div>
+                            <div className="p-2 bg-gray-50 rounded-lg">
+                                <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                </svg>
+                            </div>
+                        </div>
+
+                        <div className="bg-white rounded-xl shadow-sm px-5 py-4 border border-gray-200 flex items-center justify-between">
+                            <div>
+                                <p className="text-xs uppercase tracking-wider font-semibold text-gray-500 mb-1">Todo</p>
+                                <h2 className="text-2xl font-bold text-gray-800">{todoCount}</h2>
+                            </div>
+                            <div className="p-2 bg-gray-50 rounded-lg">
+                                <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                        </div>
+
+                        <div className="bg-white rounded-xl shadow-sm px-5 py-4 border border-blue-100 flex items-center justify-between">
+                            <div>
+                                <p className="text-xs uppercase tracking-wider font-semibold text-blue-500 mb-1">In Progress</p>
+                                <h2 className="text-2xl font-bold text-blue-700">{inProgressCount}</h2>
+                            </div>
+                            <div className="p-2 bg-blue-50 rounded-lg">
+                                <svg className="w-5 h-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                </svg>
+                            </div>
+                        </div>
+
+                        <div className="bg-white rounded-xl shadow-sm px-5 py-4 border border-green-100 flex items-center justify-between">
+                            <div>
+                                <p className="text-xs uppercase tracking-wider font-semibold text-green-500 mb-1">Done</p>
+                                <h2 className="text-2xl font-bold text-green-700">{doneCount}</h2>
+                            </div>
+                            <div className="p-2 bg-green-50 rounded-lg">
+                                <svg className="w-5 h-5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <DragDropContext onDragEnd={onDragEnd}>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+                            {/* TODO */}
+
+                            <Droppable droppableId="TODO">
+                                {(provided) => (
+                                    <div
+                                        ref={provided.innerRef}
+                                        {...provided.droppableProps}
+                                        className="bg-gray-100/80 border border-gray-200 rounded-2xl p-5 min-h-[650px] shadow-sm"
+                                    >
+                                        <h2 className="text-xl font-bold mb-6">TODO</h2>
+
+                                        <div className="space-y-4 min-h-[200px]">
+
+                                            {todoTasks.map((task, index) => (
+                                                <Draggable
+                                                    key={task.id.toString()}
+                                                    draggableId={task.id.toString()}
+                                                    index={index}
+                                                >
+                                                    {(provided) => (
+                                                        <div
+                                                            ref={provided.innerRef}
+                                                            {...provided.draggableProps}
+                                                            {...provided.dragHandleProps}
+                                                        >
+                                                            <TaskCard
+                                                                task={task}
+                                                                buttonText="Move to In Progress"
+                                                                buttonAction={() =>
+                                                                    updateTaskStatus(task.id, "IN_PROGRESS")
+                                                                }
+                                                                deleteAction={() =>
+                                                                    deleteTask(task.id)
+                                                                }
+                                                                editAction={() =>
+                                                                    openEditModal(task)
+                                                                }
+                                                            />
+                                                        </div>
+                                                    )}
+                                                </Draggable>
+                                            ))}
+
+                                            {provided.placeholder}
+                                        </div>
+                                    </div>
+                                )}
+                            </Droppable>
+
+                            {/* IN PROGRESS */}
+
+                            <Droppable droppableId="IN_PROGRESS">
+                                {(provided) => (
+                                    <div
+                                        ref={provided.innerRef}
+                                        {...provided.droppableProps}
+                                        className="bg-gray-100/80 border border-gray-200 rounded-2xl p-5 min-h-[650px] shadow-sm"
+                                    >
+                                        <h2 className="text-xl font-bold mb-6">IN PROGRESS</h2>
+
+                                        <div className="space-y-4 min-h-[200px]">
+
+                                            {inProgressTasks.map((task, index) => (
+                                                <Draggable
+                                                    key={task.id.toString()}
+                                                    draggableId={task.id.toString()}
+                                                    index={index}
+                                                >
+                                                    {(provided) => (
+                                                        <div
+                                                            ref={provided.innerRef}
+                                                            {...provided.draggableProps}
+                                                            {...provided.dragHandleProps}
+                                                        >
+                                                            <TaskCard
+                                                                task={task}
+                                                                buttonText="Move to Done"
+                                                                buttonAction={() =>
+                                                                    updateTaskStatus(task.id, "DONE")
+                                                                }
+                                                                deleteAction={() =>
+                                                                    deleteTask(task.id)
+                                                                }
+                                                                editAction={() =>
+                                                                    openEditModal(task)
+                                                                }
+                                                            />
+                                                        </div>
+                                                    )}
+                                                </Draggable>
+                                            ))}
+
+                                            {provided.placeholder}
+                                        </div>
+                                    </div>
+                                )}
+                            </Droppable>
+
+                            {/* DONE */}
+
+                            <Droppable droppableId="DONE">
+                                {(provided) => (
+                                    <div
+                                        ref={provided.innerRef}
+                                        {...provided.droppableProps}
+                                        className="bg-gray-100/80 border border-gray-200 rounded-2xl p-5 min-h-[650px] shadow-sm"
+                                    >
+                                        <h2 className="text-xl font-bold mb-6">DONE</h2>
+
+                                        <div className="space-y-4 min-h-[200px]">
+
+                                            {doneTasks.map((task, index) => (
+                                                <Draggable
+                                                    key={task.id.toString()}
+                                                    draggableId={task.id.toString()}
+                                                    index={index}
+                                                >
+                                                    {(provided) => (
+                                                        <div
+                                                            ref={provided.innerRef}
+                                                            {...provided.draggableProps}
+                                                            {...provided.dragHandleProps}
+                                                        >
+                                                            <TaskCard
+                                                                task={task}
+                                                                deleteAction={() =>
+                                                                    deleteTask(task.id)
+                                                                }
+                                                                editAction={() =>
+                                                                    openEditModal(task)
+                                                                }
+                                                            />
+                                                        </div>
+                                                    )}
+                                                </Draggable>
+                                            ))}
+
+                                            {provided.placeholder}
+                                        </div>
+                                    </div>
+                                )}
+                            </Droppable>
 
                         </div>
-                    )
-                }
+
+                    </DragDropContext>
+
+                    {
+                        showEditModal && (
+
+                            <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+
+                                <div className="bg-white p-8 rounded-2xl w-[500px] shadow-xl">
+
+                                    <h2 className="text-2xl font-bold mb-6">
+                                        Edit Task
+                                    </h2>
+
+                                    <form onSubmit={updateTask}>
+
+                                        <input
+                                            type="text"
+                                            value={editTitle}
+                                            onChange={(e) =>
+                                                setEditTitle(e.target.value)
+                                            }
+                                            className="w-full border border-gray-300 rounded-xl p-4 mb-4"
+                                        />
+
+                                        <textarea
+                                            value={editDescription}
+                                            onChange={(e) =>
+                                                setEditDescription(e.target.value)
+                                            }
+                                            className="w-full border border-gray-300 rounded-xl p-4 mb-4"
+                                        />
+
+                                        <select
+                                            value={editPriority}
+                                            onChange={(e) =>
+                                                setEditPriority(e.target.value)
+                                            }
+                                            className="w-full border border-gray-300 rounded-xl p-4 mb-4 cursor-pointer"
+                                        >
+                                            <option value="LOW">Low</option>
+                                            <option value="MEDIUM">Medium</option>
+                                            <option value="HIGH">High</option>
+                                        </select>
+
+                                        <input
+                                            type="date"
+                                            value={editDueDate}
+                                            onChange={(e) =>
+                                                setEditDueDate(e.target.value)
+                                            }
+                                            className="w-full border border-gray-300 rounded-xl p-4 mb-4 cursor-pointer"
+                                        />
+
+                                        <div className="flex gap-4">
+
+                                            <button
+                                                type="submit"
+                                                className="bg-blue-600 text-white px-6 py-3 rounded-xl cursor-pointer"
+                                            >
+                                                Save Changes
+                                            </button>
+
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setShowEditModal(false);
+                                                    setEditingTask(null);
+                                                }}
+                                                className="bg-gray-300 px-6 py-3 rounded-xl cursor-pointer"
+                                            >
+                                                Cancel
+                                            </button>
+
+                                        </div>
+
+                                    </form>
+
+                                </div>
+
+                            </div>
+                        )
+                    }
 
                 </div>
             </div>
@@ -697,13 +711,18 @@ function ProjectBoard() {
                     <div>
                         <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Quick Actions</h3>
                         <div className="grid grid-cols-2 gap-2">
-                            <button className="text-xs bg-indigo-50 text-indigo-700 hover:bg-indigo-100 py-2 px-3 rounded-lg font-medium transition-colors border border-indigo-100 cursor-pointer">Generate Tasks</button>
+                            <button
+                                onClick={() => setShowAiWorkspace(true)}
+                                className="text-xs bg-indigo-50 text-indigo-700 hover:bg-indigo-100 py-2 px-3 rounded-lg font-medium transition-colors border border-indigo-100 cursor-pointer"
+                            >
+                                Generate Tasks
+                            </button>
                             <button className="text-xs bg-indigo-50 text-indigo-700 hover:bg-indigo-100 py-2 px-3 rounded-lg font-medium transition-colors border border-indigo-100 cursor-pointer">Suggest Next Task</button>
                             <button className="text-xs bg-indigo-50 text-indigo-700 hover:bg-indigo-100 py-2 px-3 rounded-lg font-medium transition-colors border border-indigo-100 cursor-pointer">Detect Missing Tasks</button>
                             <button className="text-xs bg-indigo-50 text-indigo-700 hover:bg-indigo-100 py-2 px-3 rounded-lg font-medium transition-colors border border-indigo-100 cursor-pointer">Break Down Task</button>
                         </div>
                     </div>
-                    
+
                     <div className="flex-1 flex flex-col border border-gray-200 rounded-2xl overflow-hidden bg-gray-50/50 shadow-inner">
                         <div className="flex-1 p-4 overflow-auto">
                             <div className="mb-4 flex flex-col items-end">
@@ -723,7 +742,7 @@ function ProjectBoard() {
                         </div>
                         <div className="p-3 bg-white border-t border-gray-200">
                             <div className="relative flex items-center">
-                                <textarea 
+                                <textarea
                                     className="w-full bg-gray-100 border-transparent focus:border-blue-500 focus:bg-white focus:ring-1 focus:ring-blue-500 rounded-xl pl-4 pr-12 py-3 text-sm resize-none"
                                     rows="1"
                                     placeholder="Ask DevFlow AI..."
@@ -738,7 +757,98 @@ function ProjectBoard() {
                     </div>
                 </div>
             </div>
+            {
+                showAiWorkspace && (
+                    <div className="fixed top-12 left-1/2 -translate-x-1/2 z-50 w-[1000px] h-[720px] bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col overflow-hidden">
 
+                        {/* HEADER */}
+
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+
+                            <div>
+                                <h2 className="text-xl font-semibold text-gray-800">
+                                    AI Workspace
+                                </h2>
+
+                                <p className="text-sm text-gray-500 mt-1">
+                                    Generate and edit tasks before adding them to board
+                                </p>
+                            </div>
+
+                            <button
+                                onClick={() => setShowAiWorkspace(false)}
+                                className="text-gray-500 hover:text-black text-2xl cursor-pointer"
+                            >
+                                ×
+                            </button>
+
+                        </div>
+
+                        {/* BODY */}
+
+                        <div className="grid grid-cols-2 gap-6 flex-1 p-6 overflow-hidden">
+
+                            {/* LEFT */}
+
+                            <div className="flex flex-col">
+
+                                <h3 className="font-semibold text-gray-700 mb-3">
+                                    Project Idea
+                                </h3>
+
+                                <textarea
+                                    placeholder="Describe your project idea..."
+                                    value={projectIdea}
+                                    onChange={(e) =>
+                                        setProjectIdea(e.target.value)
+                                    }
+                                    className="flex-1 border border-gray-300 rounded-xl p-4 resize-none focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                />
+
+                                <button
+                                    onClick={generateTasksWithAI}
+                                    className="mt-4 bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-xl font-medium cursor-pointer"
+                                >
+                                    {
+                                        loadingAi
+                                            ? "Generating..."
+                                            : "Generate Tasks"
+                                    }
+                                </button>
+
+                            </div>
+
+                            {/* RIGHT */}
+
+                            <div className="flex flex-col">
+
+                                <h3 className="font-semibold text-gray-700 mb-3">
+                                    Generated Tasks (Editable)
+                                </h3>
+
+                                <textarea
+                                    value={aiTasksText}
+                                    onChange={(e) =>
+                                        setAiTasksText(e.target.value)
+                                    }
+                                    placeholder="Generated tasks will appear here..."
+                                    className="flex-1 border border-gray-300 rounded-xl p-4 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                />
+
+                                <button
+                                    onClick={addAiTasksToBoard}
+                                    className="mt-4 bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-medium cursor-pointer"
+                                >
+                                    + Add Tasks To Board
+                                </button>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+                )
+            }
         </div>
     );
 }
