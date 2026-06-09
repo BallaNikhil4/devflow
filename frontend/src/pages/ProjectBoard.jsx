@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
+import { createPortal } from "react-dom";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-import { Rnd } from "react-rnd";
+import Moveable from "react-draggable";
 import TaskCard from "../components/TaskCard";
 import Sidebar from "../components/Sidebar";
 
@@ -37,10 +38,149 @@ function ProjectBoard() {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     const [showAiWorkspace, setShowAiWorkspace] = useState(false);
+    const [position, setPosition] = useState({
+        x: 200,
+        y: 50
+    });
+
+    const dragData = useRef({
+        dragging: false,
+        offsetX: 0,
+        offsetY: 0
+    });
+
+    const [size, setSize] = useState({
+        width: 750,
+        height: 500
+    });
+    const resizeData = useRef({
+        resizing: false,
+        startX: 0,
+        startY: 0,
+        startWidth: 0,
+        startHeight: 0
+    });
 
     useEffect(() => {
         fetchTasks();
     }, []);
+
+    // drag logic functions
+    function handleMouseDown(e) {
+
+        dragData.current.dragging = true;
+
+        dragData.current.offsetX =
+            e.clientX - position.x;
+
+        dragData.current.offsetY =
+            e.clientY - position.y;
+    }
+
+    function handleMouseMove(e) {
+
+        if (!dragData.current.dragging)
+            return;
+
+        setPosition({
+            x:
+                e.clientX -
+                dragData.current.offsetX,
+
+            y:
+                e.clientY -
+                dragData.current.offsetY
+        });
+    }
+
+    function handleMouseUp() {
+
+        dragData.current.dragging = false;
+    }
+
+    function handleResizeMouseDown(e) {
+
+        e.stopPropagation();
+
+        resizeData.current.resizing = true;
+
+        resizeData.current.startX = e.clientX;
+        resizeData.current.startY = e.clientY;
+
+        resizeData.current.startWidth =
+            size.width;
+
+        resizeData.current.startHeight =
+            size.height;
+    }
+
+    function handleResizeMouseMove(e) {
+
+        if (!resizeData.current.resizing)
+            return;
+
+        const newWidth =
+            resizeData.current.startWidth +
+            (e.clientX - resizeData.current.startX);
+
+        const newHeight =
+            resizeData.current.startHeight +
+            (e.clientY - resizeData.current.startY);
+
+        setSize({
+            width: Math.max(250, newWidth),
+            height: Math.max(350, newHeight)
+        });
+    }
+
+    function handleResizeMouseUp() {
+
+        resizeData.current.resizing = false;
+    }
+
+
+    useEffect(() => {
+
+        function move(e) {
+            handleMouseMove(e);
+            handleResizeMouseMove(e);
+        }
+
+        function up() {
+            handleMouseUp();
+            handleResizeMouseUp();
+        }
+
+        window.addEventListener(
+            "mousemove",
+            move
+        );
+
+        window.addEventListener(
+            "mouseup",
+            up
+        );
+
+        return () => {
+
+            window.removeEventListener(
+                "mousemove",
+                move
+            );
+
+            window.removeEventListener(
+                "mouseup",
+                up
+            );
+
+        };
+
+    }, [position, size]);
+
+
+
+
+    // main functions
 
     async function fetchTasks() {
         try {
@@ -758,95 +898,142 @@ function ProjectBoard() {
                 </div>
             </div>
             {
-                showAiWorkspace && (
-                    <div className="fixed top-12 left-1/2 -translate-x-1/2 z-50 w-[1000px] h-[720px] bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col overflow-hidden">
+                showAiWorkspace &&
+                createPortal(
 
-                        {/* HEADER */}
+                    <div
+                        style={{
+                            position: "fixed",
+                            left: position.x,
+                            top: position.y,
+                            width: size.width,
+                            height: size.height,
+                            zIndex: 999999
+                        }}
+                    >
 
-                        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+                        <div className="relative w-full h-full bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col">                            {/* HEADER */}
 
-                            <div>
-                                <h2 className="text-xl font-semibold text-gray-800">
-                                    AI Workspace
-                                </h2>
-
-                                <p className="text-sm text-gray-500 mt-1">
-                                    Generate and edit tasks before adding them to board
-                                </p>
-                            </div>
-
-                            <button
-                                onClick={() => setShowAiWorkspace(false)}
-                                className="text-gray-500 hover:text-black text-2xl cursor-pointer"
+                            <div
+                                onMouseDown={handleMouseDown}
+                                className="cursor-move flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-white rounded-t-2xl select-none"
                             >
-                                ×
-                            </button>
 
-                        </div>
+                                <div>
+                                    <h2 className="text-xl font-semibold text-gray-800">
+                                        AI Workspace
+                                    </h2>
 
-                        {/* BODY */}
+                                    <p className="text-sm text-gray-500 mt-1">
+                                        Generate and edit tasks before adding to board
+                                    </p>
+                                </div>
 
-                        <div className="grid grid-cols-2 gap-6 flex-1 p-6 overflow-hidden">
+                                <div className="flex items-center gap-3">
 
-                            {/* LEFT */}
+                                    <button
+                                        onClick={() =>
+                                            window.open(
+                                                `/project/${projectId}/ai`,
+                                                "_blank"
+                                            )
+                                        }
+                                        className="text-sm px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-100 cursor-pointer"
+                                    >
+                                        ↗ Open in New Tab
+                                    </button>
 
-                            <div className="flex flex-col">
+                                    <button
+                                        onClick={() =>
+                                            setShowAiWorkspace(false)
+                                        }
+                                        className="text-gray-500 hover:text-black text-2xl cursor-pointer"
+                                    >
+                                        ×
+                                    </button>
 
-                                <h3 className="font-semibold text-gray-700 mb-3">
-                                    Project Idea
-                                </h3>
-
-                                <textarea
-                                    placeholder="Describe your project idea..."
-                                    value={projectIdea}
-                                    onChange={(e) =>
-                                        setProjectIdea(e.target.value)
-                                    }
-                                    className="flex-1 border border-gray-300 rounded-xl p-4 resize-none focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                />
-
-                                <button
-                                    onClick={generateTasksWithAI}
-                                    className="mt-4 bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-xl font-medium cursor-pointer"
-                                >
-                                    {
-                                        loadingAi
-                                            ? "Generating..."
-                                            : "Generate Tasks"
-                                    }
-                                </button>
-
-                            </div>
-
-                            {/* RIGHT */}
-
-                            <div className="flex flex-col">
-
-                                <h3 className="font-semibold text-gray-700 mb-3">
-                                    Generated Tasks (Editable)
-                                </h3>
-
-                                <textarea
-                                    value={aiTasksText}
-                                    onChange={(e) =>
-                                        setAiTasksText(e.target.value)
-                                    }
-                                    placeholder="Generated tasks will appear here..."
-                                    className="flex-1 border border-gray-300 rounded-xl p-4 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                />
-
-                                <button
-                                    onClick={addAiTasksToBoard}
-                                    className="mt-4 bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-medium cursor-pointer"
-                                >
-                                    + Add Tasks To Board
-                                </button>
+                                </div>
 
                             </div>
 
+                            {/* BODY */}
+
+                            <div className="flex flex-col flex-1 p-6 overflow-y-auto">
+
+                                <div className="mb-4">
+
+                                    <h3 className="font-semibold text-gray-700 mb-3">
+                                        Project Idea
+                                    </h3>
+
+                                    <textarea
+                                        placeholder="Describe your project idea..."
+                                        value={projectIdea}
+                                        onChange={(e) =>
+                                            setProjectIdea(e.target.value)
+                                        }
+                                        className="w-full h-20 border border-gray-300 rounded-xl p-4 resize-none focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                    />
+
+                                    <button
+                                        onClick={generateTasksWithAI}
+                                        className="mt-4 w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-xl font-medium cursor-pointer"
+                                    >
+                                        {
+                                            loadingAi
+                                                ? "Generating..."
+                                                : "Generate Tasks"
+                                        }
+                                    </button>
+
+                                </div>
+
+                                <div className="flex flex-col flex-1 min-h-0">
+
+                                    <h3 className="font-semibold text-gray-700 mb-3">
+                                        Generated Tasks (Editable)
+                                    </h3>
+
+                                    <textarea
+                                        value={aiTasksText}
+                                        onChange={(e) =>
+                                            setAiTasksText(e.target.value)
+                                        }
+                                        placeholder="Generated tasks will appear here..."
+                                        className="flex-1 min-h-[250px] w-full border border-gray-300 rounded-xl p-4 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    />
+
+                                    <button
+                                        onClick={addAiTasksToBoard}
+                                        className="mt-4 bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-medium cursor-pointer"
+                                    >
+                                        + Add Tasks To Board
+                                    </button>
+
+                                </div>
+
+                            </div>
+                            <div
+                                onMouseDown={handleResizeMouseDown}
+                                className="absolute bottom-0 right-0 w-5 h-5 cursor-se-resize"
+                            >
+                                <svg
+                                    width="20"
+                                    height="20"
+                                    viewBox="0 0 20 20"
+                                >
+                                    <path
+                                        d="M0 20 L20 0 M8 20 L20 8 M16 20 L20 16"
+                                        stroke="gray"
+                                        strokeWidth="2"
+                                    />
+                                </svg>
+                            </div>
                         </div>
 
-                    </div>
+                    </div>,
+
+                    document.body
                 )
             }
         </div>
