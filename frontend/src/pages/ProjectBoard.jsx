@@ -3,7 +3,6 @@ import { useParams } from "react-router-dom";
 import axios from "axios";
 import { createPortal } from "react-dom";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-import Moveable from "react-draggable";
 import TaskCard from "../components/TaskCard";
 import Sidebar from "../components/Sidebar";
 
@@ -82,14 +81,28 @@ function ProjectBoard() {
         if (!dragData.current.dragging)
             return;
 
-        setPosition({
-            x:
-                e.clientX -
-                dragData.current.offsetX,
+        const newX =
+            e.clientX - dragData.current.offsetX;
 
-            y:
-                e.clientY -
-                dragData.current.offsetY
+        const newY =
+            e.clientY - dragData.current.offsetY;
+
+        setPosition({
+            x: Math.max(
+                0,
+                Math.min(
+                    window.innerWidth - size.width,
+                    newX
+                )
+            ),
+
+            y: Math.max(
+                0,
+                Math.min(
+                    window.innerHeight - 80,
+                    newY
+                )
+            )
         });
     }
 
@@ -127,9 +140,22 @@ function ProjectBoard() {
             resizeData.current.startHeight +
             (e.clientY - resizeData.current.startY);
 
+        const maxWidth =
+            window.innerWidth - position.x;
+
+        const maxHeight =
+            window.innerHeight - position.y;
+
         setSize({
-            width: Math.max(250, newWidth),
-            height: Math.max(350, newHeight)
+            width: Math.max(
+                500,
+                Math.min(maxWidth, newWidth)
+            ),
+
+            height: Math.max(
+                400,
+                Math.min(maxHeight, newHeight)
+            )
         });
     }
 
@@ -916,11 +942,11 @@ function ProjectBoard() {
 
                             <div
                                 onMouseDown={handleMouseDown}
-                                className="cursor-move flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-white rounded-t-2xl select-none"
+                                className="cursor-move flex items-center justify-between px-5 py-3 border-b border-gray-200 bg-white rounded-t-2xl select-none"
                             >
 
                                 <div>
-                                    <h2 className="text-xl font-semibold text-gray-800">
+                                    <h2 className="text-lg font-semibold text-gray-800">
                                         AI Workspace
                                     </h2>
 
@@ -938,9 +964,10 @@ function ProjectBoard() {
                                                 "_blank"
                                             )
                                         }
-                                        className="text-sm px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-100 cursor-pointer"
+                                        title="Open in New Tab"
+                                        className="w-9 h-9 flex items-center justify-center rounded-lg border border-gray-300 hover:bg-gray-100 transition cursor-pointer"
                                     >
-                                        ↗ Open in New Tab
+                                        ↗
                                     </button>
 
                                     <button
@@ -958,11 +985,11 @@ function ProjectBoard() {
 
                             {/* BODY */}
 
-                            <div className="flex flex-col flex-1 p-6 overflow-y-auto">
+                            <div className="flex flex-col flex-1 p-4 overflow-y-auto">
 
-                                <div className="mb-4">
+                                <div className="mb-3">
 
-                                    <h3 className="font-semibold text-gray-700 mb-3">
+                                    <h3 className="font-semibold text-gray-700 mb-2">
                                         Project Idea
                                     </h3>
 
