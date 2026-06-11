@@ -213,4 +213,57 @@ public class AiService {
                 "http://localhost:11434/api/generate",
                 prompt.toString());
     }
+
+    public String breakDownTask(
+            Long projectId,
+            String taskTitle) {
+
+        String context = buildProjectContext(projectId);
+
+        StringBuilder prompt = new StringBuilder();
+
+        prompt.append(
+                "You are DevFlow AI, an intelligent software development assistant.\n\n");
+
+        prompt.append(
+                "Your job is to break a large software development task into smaller actionable subtasks.\n");
+
+        prompt.append(
+                "The subtasks should follow a logical implementation order.\n");
+
+        prompt.append(
+                "Do not generate unnecessary tasks.\n");
+        prompt.append(
+                "Do not generate tasks that already exist in the current board.\n");
+        prompt.append(
+                "Think like a senior software architect.\n\n");
+
+        prompt.append(
+                "Current Project:\n\n");
+
+        prompt.append(context);
+
+        prompt.append("\n");
+
+        prompt.append(
+                "Task To Break Down:\n");
+
+        prompt.append(taskTitle);
+
+        prompt.append("\n\n");
+
+        prompt.append(
+                "Return the answer in this format:\n\n");
+
+        prompt.append(
+                "1. <subtask>\n");
+        prompt.append(
+                "2. <subtask>\n");
+        prompt.append(
+                "3. <subtask>\n");
+
+        return callOllama(
+                "http://localhost:11434/api/generate",
+                prompt.toString());
+    }
 }

@@ -46,4 +46,17 @@ public class AiController {
         return aiService.detectMissingTasks(projectId);
     }
 
+    @PostMapping("/break-down")
+    public String breakDownTask(
+            @RequestBody Map<String, String> body) {
+
+        Long projectId = Long.parseLong(
+                body.get("projectId"));
+
+        String taskTitle = body.get("taskTitle");
+
+        return aiService.breakDownTask(
+                projectId,
+                taskTitle);
+    }
 }
