@@ -36,6 +36,10 @@ function ProjectBoard() {
 
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
+    const [chatInput, setChatInput] = useState("");
+    const [chatMessages, setChatMessages] = useState([]);
+    const [loadingCopilot, setLoadingCopilot] = useState(false);
+
     const [showAiWorkspace, setShowAiWorkspace] = useState(false);
     const [position, setPosition] = useState({
         x: 200,
@@ -340,6 +344,60 @@ function ProjectBoard() {
             console.log(error);
         } finally {
             setLoadingAi(false);
+        }
+    }
+    async function sendChatMessage() {
+
+        if (!chatInput.trim())
+            return;
+
+        const userMessage = {
+            sender: "user",
+            text: chatInput
+        };
+
+        setChatMessages(prev => [
+            ...prev,
+            userMessage
+        ]);
+
+        const currentMessage =
+            chatInput;
+
+        setChatInput("");
+
+        try {
+            setLoadingCopilot(true);
+            const response =
+                await axios.post(
+                    "http://localhost:8080/ai/chat",
+                    {
+                        projectId,
+                        message:
+                            currentMessage
+                    }
+                );
+            const aiMessage = {
+                sender: "ai",
+                text: response.data
+            };
+            setChatMessages(prev => [
+                ...prev,
+                aiMessage
+            ]);
+        }
+        catch (error) {
+            setChatMessages(prev => [
+                ...prev,
+                {
+                    sender: "ai",
+                    text: "Failed to contact DevFlow AI."
+                }
+            ]);
+            console.log(error);
+        }
+        finally {
+            setLoadingCopilot(false);
         }
     }
 
@@ -891,32 +949,67 @@ function ProjectBoard() {
 
                     <div className="flex-1 flex flex-col border border-gray-200 rounded-2xl overflow-hidden bg-gray-50/50 shadow-inner">
                         <div className="flex-1 p-4 overflow-auto">
-                            <div className="mb-4 flex flex-col items-end">
-                                <div className="bg-blue-600 text-white rounded-2xl rounded-tr-sm py-2.5 px-4 max-w-[90%] text-sm shadow-sm">
-                                    What should I build next?
-                                </div>
-                            </div>
-                            <div className="mb-4 flex flex-col items-start">
-                                <div className="bg-white border border-gray-200 text-gray-700 rounded-2xl rounded-tl-sm py-3 px-4 max-w-[95%] text-sm shadow-sm">
-                                    <p className="mb-2 font-medium">Based on your current board, I suggest:</p>
-                                    <ul className="list-disc pl-5 space-y-1 text-gray-600">
-                                        <li>User authentication module</li>
-                                        <li>Database schema setup</li>
-                                    </ul>
-                                </div>
-                            </div>
+
+                            {
+                                chatMessages.map(
+                                    (msg, index) => (
+
+                                        <div
+                                            key={index}
+                                            className={
+                                                msg.sender === "user"
+                                                    ? "mb-4 flex flex-col items-end"
+                                                    : "mb-4 flex flex-col items-start"
+                                            }
+                                        >
+
+                                            <div
+                                                className={
+                                                    msg.sender === "user"
+                                                        ?
+                                                        "bg-blue-600 text-white rounded-2xl rounded-tr-sm py-2.5 px-4 max-w-[90%] text-sm shadow-sm whitespace-pre-wrap"
+                                                        :
+                                                        "bg-white border border-gray-200 text-gray-700 rounded-2xl rounded-tl-sm py-3 px-4 max-w-[95%] text-sm shadow-sm whitespace-pre-wrap"
+                                                }
+                                            >
+
+                                                {msg.text}
+
+                                            </div>
+
+                                        </div>
+
+                                    )
+                                )
+                            }
+
                         </div>
                         <div className="p-3 bg-white border-t border-gray-200">
                             <div className="relative flex items-center">
                                 <textarea
+                                    value={chatInput}
+                                    onChange={(e) =>
+                                        setChatInput(
+                                            e.target.value
+                                        )
+                                    }
                                     className="w-full bg-gray-100 border-transparent focus:border-blue-500 focus:bg-white focus:ring-1 focus:ring-blue-500 rounded-xl pl-4 pr-12 py-3 text-sm resize-none"
                                     rows="1"
                                     placeholder="Ask DevFlow AI..."
-                                ></textarea>
-                                <button className="absolute right-2 p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors cursor-pointer shadow-sm">
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                        <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
-                                    </svg>
+                                />
+                                <button
+                                    onClick={sendChatMessage}
+                                    disabled={loadingCopilot}
+                                    className="absolute right-2 p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors cursor-pointer shadow-sm"
+                                >
+                                    {
+                                        loadingCopilot
+                                            ? "..."
+                                            :
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                                <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+                                            </svg>
+                                    }
                                 </button>
                             </div>
                         </div>
