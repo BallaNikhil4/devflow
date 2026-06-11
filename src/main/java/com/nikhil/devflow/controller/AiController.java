@@ -23,4 +23,27 @@ public class AiController {
 
         return aiService.generateTasks(idea);
     }
+
+    @PostMapping("/chat")
+    public String chat(@RequestBody Map<String, String> body) {
+        Long projectId = Long.parseLong(body.get("projectId"));
+        String message = body.get("message");
+        return aiService.chat(projectId, message);
+    }
+
+    @PostMapping("/suggest-next")
+    public String suggestNext(@RequestBody Map<String, String> body) {
+
+        Long projectId = Long.parseLong(body.get("projectId"));
+
+        return aiService.suggestNextTask(projectId);
+    }
+
+    @PostMapping("/detect-missing")
+    public String detectMissing(@RequestBody Map<String, String> body) {
+        Long projectId = Long.parseLong(body.get("projectId"));
+
+        return aiService.detectMissingTasks(projectId);
+    }
+
 }
