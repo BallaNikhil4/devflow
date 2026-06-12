@@ -1,5 +1,7 @@
 package com.nikhil.devflow.service;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -20,6 +22,7 @@ public class AiService {
 
     @Autowired
     TaskRepository taskRepository;
+    private Map<Long, List<String>> chatHistory = new HashMap<>();
 
     @SuppressWarnings("unchecked")
     public String callOllama(String endPoint, String prompt) {
@@ -122,6 +125,7 @@ public class AiService {
 
     public String chat(Long projectId, String message) {
         String context = buildProjectContext(projectId);
+        String previousConversation = getChatHistory(projectId);
         StringBuilder prompt = new StringBuilder();
 
         prompt.append(
@@ -136,7 +140,9 @@ public class AiService {
         prompt.append("Current Project:\n\n");
         prompt.append(context);
         prompt.append("\n");
-
+        prompt.append("Previous Conversation:\n\n");
+        prompt.append(previousConversation);
+        prompt.append("\n");
         prompt.append("User Question:\n");
         prompt.append(message);
 
@@ -144,13 +150,45 @@ public class AiService {
         prompt.append("Give a clear and concise answer.");
 
         String endpoint = "http://localhost:11434/api/generate";
-        return callOllama(endpoint, prompt.toString());
+        String aiResponse = callOllama(endpoint, prompt.toString());
+        addToHistory(projectId, message, aiResponse);
+        return aiResponse;
+    }
+
+    private String getChatHistory(Long projectId) {
+        List<String> history = chatHistory.getOrDefault(projectId, new ArrayList<>());
+
+        StringBuilder sb = new StringBuilder();
+
+        for (String msg : history) {
+            sb.append(msg);
+            sb.append("\n");
+        }
+
+        return sb.toString();
+    }
+
+    private void addToHistory(Long projectId, String userMessage, String aiMessage) {
+
+        List<String> history = chatHistory.getOrDefault(
+                projectId,
+                new ArrayList<>());
+        history.add("User: " + userMessage);
+
+        history.add("AI: " + aiMessage);
+        if (history.size() > 20) {
+            history = history.subList(
+                    history.size() - 20,
+                    history.size());
+        }
+        chatHistory.put(projectId, history);
+
     }
 
     public String suggestNextTask(Long projectId) {
 
         String context = buildProjectContext(projectId);
-
+        String previousConversation = getChatHistory(projectId);
         StringBuilder prompt = new StringBuilder();
 
         prompt.append(
@@ -165,6 +203,11 @@ public class AiService {
         prompt.append("Current Project:\n\n");
 
         prompt.append(context);
+        prompt.append("\n\n");
+
+        prompt.append("Previous Conversation:\n\n");
+
+        prompt.append(previousConversation);
 
         prompt.append("\n");
 
@@ -177,15 +220,19 @@ public class AiService {
         prompt.append(
                 "Reason: <why this should be done next>");
 
-        return callOllama(
+        String aiResponse = callOllama(
                 "http://localhost:11434/api/generate",
                 prompt.toString());
+
+        addToHistory(projectId, "Suggest the next task for my project.", aiResponse);
+
+        return aiResponse;
     }
 
     public String detectMissingTasks(Long projectId) {
 
         String context = buildProjectContext(projectId);
-
+        String previousConversation = getChatHistory(projectId);
         StringBuilder prompt = new StringBuilder();
 
         prompt.append(
@@ -205,13 +252,26 @@ public class AiService {
         prompt.append(context);
 
         prompt.append("\n");
+        prompt.append("\n\n");
+
+        prompt.append(
+                "Previous Conversation:\n\n");
+
+        prompt.append(
+                previousConversation);
+
+        prompt.append("\n");
 
         prompt.append(
                 "Return only the missing tasks with a short explanation.");
 
-        return callOllama(
+        String aiResponse = callOllama(
                 "http://localhost:11434/api/generate",
                 prompt.toString());
+
+        addToHistory(projectId,
+                "Detect important missing tasks.", aiResponse);
+        return aiResponse;
     }
 
     public String breakDownTask(
