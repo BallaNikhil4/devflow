@@ -1,329 +1,51 @@
 package com.nikhil.devflow.service;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
-import org.springframework.beans.factory.annotation.Autowired;
+import com.nikhil.devflow.service.ai.AgentOrchestrator;
+import com.nikhil.devflow.service.ai.OllamaClient;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
-
-import com.nikhil.devflow.entity.Project;
-import com.nikhil.devflow.entity.Task;
-import com.nikhil.devflow.repository.ProjectRepository;
-import com.nikhil.devflow.repository.TaskRepository;
 
 @Service
 public class AiService {
-    @Autowired
-    ProjectRepository projectRepository;
+    
+    private final AgentOrchestrator agentOrchestrator;
+    private final OllamaClient ollamaClient;
 
-    @Autowired
-    TaskRepository taskRepository;
-    private Map<Long, List<String>> chatHistory = new HashMap<>();
-
-    @SuppressWarnings("unchecked")
-    public String callOllama(String endPoint, String prompt) {
-        RestTemplate restTemplate = new RestTemplate();
-        Map<String, Object> request = Map.of(
-                "model", "mistral",
-                "prompt", prompt,
-                "stream", false);
-        Map<String, Object> response = restTemplate.postForObject(
-                endPoint,
-                request,
-                Map.class);
-        if (response == null || response.get("response") == null) {
-            return "Failed to get AI response";
-        }
-        return response.get("response").toString();
-    }
-
-    public String buildProjectContext(Long projectId) {
-
-        Optional<Project> optionalProject = projectRepository.findById(projectId);
-
-        if (!optionalProject.isPresent()) {
-            return "Project not found";
-        }
-
-        Project project = optionalProject.get();
-
-        List<Task> tasks = taskRepository.findByProjectId(projectId);
-
-        StringBuilder sb = new StringBuilder();
-
-        sb.append("Project Name:\n");
-        sb.append(project.getName());
-        sb.append("\n\n");
-
-        sb.append("Project Description:\n");
-        sb.append(
-                project.getDescription() == null
-                        ? "No description"
-                        : project.getDescription());
-
-        sb.append("\n\n");
-
-        sb.append("Current Board:\n\n");
-
-        sb.append("TODO:\n");
-        for (Task task : tasks) {
-            if (task.getStatus().equals("TODO")) {
-                sb.append("- ");
-                sb.append(task.getTitle());
-                sb.append("\n");
-            }
-        }
-
-        sb.append("\nIN_PROGRESS:\n");
-        for (Task task : tasks) {
-            if (task.getStatus().equals("IN_PROGRESS")) {
-                sb.append("- ");
-                sb.append(task.getTitle());
-                sb.append("\n");
-            }
-        }
-
-        sb.append("\nDONE:\n");
-        for (Task task : tasks) {
-            if (task.getStatus().equals("DONE")) {
-                sb.append("- ");
-                sb.append(task.getTitle());
-                sb.append("\n");
-            }
-        }
-
-        return sb.toString();
+    public AiService(AgentOrchestrator agentOrchestrator, OllamaClient ollamaClient) {
+        this.agentOrchestrator = agentOrchestrator;
+        this.ollamaClient = ollamaClient;
     }
 
     public String generateTasks(String idea) {
-        String prompt = "You are a senior software architect helping break project ideas into development tasks. "
-                +
-
+        String prompt = "You are a senior software architect helping break project ideas into development tasks. " +
                 "Break the following software project idea into clear actionable development tasks. " +
-
                 "For every task return exactly in this format:\n\n" +
-
                 "Title: <short task title>\n" +
                 "Description: <1-2 sentence explanation>\n" +
                 "Priority: HIGH or MEDIUM or LOW\n\n" +
-
                 "Rules:\n" +
                 "- Keep title short and clear\n" +
                 "- Description should explain what needs to be built\n" +
                 "- Return only tasks\n" +
                 "- Do not add introductions\n" +
                 "- Do not add explanations outside task list\n\n" +
-
                 "Project Idea: " + idea;
 
-        return callOllama("http://localhost:11434/api/generate", prompt);
+        return ollamaClient.generate(prompt);
     }
 
     public String chat(Long projectId, String message) {
-        String context = buildProjectContext(projectId);
-        String previousConversation = getChatHistory(projectId);
-        StringBuilder prompt = new StringBuilder();
-
-        prompt.append(
-                "You are DevFlow AI, an intelligent software development assistant.\n\n");
-
-        prompt.append(
-                "Your job is to help developers plan, organize and improve their projects.\n\n");
-        prompt.append(
-                "Always use the current project context and current board while answering. ");
-        prompt.append(
-                "Do not ignore the existing tasks.\n\n");
-        prompt.append("Current Project:\n\n");
-        prompt.append(context);
-        prompt.append("\n");
-        prompt.append("Previous Conversation:\n\n");
-        prompt.append(previousConversation);
-        prompt.append("\n");
-        prompt.append("User Question:\n");
-        prompt.append(message);
-
-        prompt.append("\n\n");
-        prompt.append("Give a clear and concise answer.");
-
-        String endpoint = "http://localhost:11434/api/generate";
-        String aiResponse = callOllama(endpoint, prompt.toString());
-        addToHistory(projectId, message, aiResponse);
-        return aiResponse;
-    }
-
-    private String getChatHistory(Long projectId) {
-        List<String> history = chatHistory.getOrDefault(projectId, new ArrayList<>());
-
-        StringBuilder sb = new StringBuilder();
-
-        for (String msg : history) {
-            sb.append(msg);
-            sb.append("\n");
-        }
-
-        return sb.toString();
-    }
-
-    private void addToHistory(Long projectId, String userMessage, String aiMessage) {
-
-        List<String> history = chatHistory.getOrDefault(
-                projectId,
-                new ArrayList<>());
-        history.add("User: " + userMessage);
-
-        history.add("AI: " + aiMessage);
-        if (history.size() > 20) {
-            history = history.subList(
-                    history.size() - 20,
-                    history.size());
-        }
-        chatHistory.put(projectId, history);
-
+        return agentOrchestrator.processRequest(projectId, message);
     }
 
     public String suggestNextTask(Long projectId) {
-
-        String context = buildProjectContext(projectId);
-        String previousConversation = getChatHistory(projectId);
-        StringBuilder prompt = new StringBuilder();
-
-        prompt.append(
-                "You are DevFlow AI, an intelligent software development assistant.\n\n");
-
-        prompt.append(
-                "Analyze the current project board and suggest ONLY the single best next task.\n");
-
-        prompt.append(
-                "Consider completed tasks, tasks in progress and logical dependencies.\n\n");
-
-        prompt.append("Current Project:\n\n");
-
-        prompt.append(context);
-        prompt.append("\n\n");
-
-        prompt.append("Previous Conversation:\n\n");
-
-        prompt.append(previousConversation);
-
-        prompt.append("\n");
-
-        prompt.append(
-                "Return your answer in this format:\n\n");
-
-        prompt.append(
-                "Task: <next task>\n");
-
-        prompt.append(
-                "Reason: <why this should be done next>");
-
-        String aiResponse = callOllama(
-                "http://localhost:11434/api/generate",
-                prompt.toString());
-
-        addToHistory(projectId, "Suggest the next task for my project.", aiResponse);
-
-        return aiResponse;
+        return agentOrchestrator.processRequest(projectId, "What should I build next?");
     }
 
     public String detectMissingTasks(Long projectId) {
-
-        String context = buildProjectContext(projectId);
-        String previousConversation = getChatHistory(projectId);
-        StringBuilder prompt = new StringBuilder();
-
-        prompt.append(
-                "You are DevFlow AI, an intelligent software development assistant.\n\n");
-
-        prompt.append(
-                "Analyze the current project board and identify important missing tasks.\n");
-
-        prompt.append(
-                "Do not repeat tasks that already exist.\n");
-
-        prompt.append(
-                "Think like a senior software architect.\n\n");
-
-        prompt.append("Current Project:\n\n");
-
-        prompt.append(context);
-
-        prompt.append("\n");
-        prompt.append("\n\n");
-
-        prompt.append(
-                "Previous Conversation:\n\n");
-
-        prompt.append(
-                previousConversation);
-
-        prompt.append("\n");
-
-        prompt.append(
-                "Return only the missing tasks with a short explanation.");
-
-        String aiResponse = callOllama(
-                "http://localhost:11434/api/generate",
-                prompt.toString());
-
-        addToHistory(projectId,
-                "Detect important missing tasks.", aiResponse);
-        return aiResponse;
+        return agentOrchestrator.processRequest(projectId, "What are the missing tasks?");
     }
 
-    public String breakDownTask(
-            Long projectId,
-            String taskTitle) {
-
-        String context = buildProjectContext(projectId);
-
-        StringBuilder prompt = new StringBuilder();
-
-        prompt.append(
-                "You are DevFlow AI, an intelligent software development assistant.\n\n");
-
-        prompt.append(
-                "Your job is to break a large software development task into smaller actionable subtasks.\n");
-
-        prompt.append(
-                "The subtasks should follow a logical implementation order.\n");
-
-        prompt.append(
-                "Do not generate unnecessary tasks.\n");
-        prompt.append(
-                "Do not generate tasks that already exist in the current board.\n");
-        prompt.append(
-                "Think like a senior software architect.\n\n");
-
-        prompt.append(
-                "Current Project:\n\n");
-
-        prompt.append(context);
-
-        prompt.append("\n");
-
-        prompt.append(
-                "Task To Break Down:\n");
-
-        prompt.append(taskTitle);
-
-        prompt.append("\n\n");
-
-        prompt.append(
-                "Return the answer in this format:\n\n");
-
-        prompt.append(
-                "1. <subtask>\n");
-        prompt.append(
-                "2. <subtask>\n");
-        prompt.append(
-                "3. <subtask>\n");
-
-        return callOllama(
-                "http://localhost:11434/api/generate",
-                prompt.toString());
+    public String breakDownTask(Long projectId, String taskTitle) {
+        return agentOrchestrator.processRequest(projectId, "Break down this task", taskTitle);
     }
 }
